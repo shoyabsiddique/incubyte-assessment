@@ -38,5 +38,24 @@ dependencies {
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+	// Fast tests only: domain, architecture and slice tests that need no Docker.
+	useJUnitPlatform {
+		excludeTags 'integration'
+	}
+}
+
+tasks.register('integrationTest', Test) {
+	// Tests tagged "integration" run against a real MariaDB via Testcontainers (needs Docker).
+	description = 'Runs integration tests against MariaDB in Testcontainers.'
+	group = 'verification'
+	testClassesDirs = sourceSets.test.output.classesDirs
+	classpath = sourceSets.test.runtimeClasspath
+	useJUnitPlatform {
+		includeTags 'integration'
+	}
+	shouldRunAfter tasks.named('test')
+}
+
+tasks.named('check') {
+	dependsOn tasks.named('integrationTest')
 }
