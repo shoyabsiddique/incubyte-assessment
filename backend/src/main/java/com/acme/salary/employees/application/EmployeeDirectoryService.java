@@ -52,6 +52,11 @@ public class EmployeeDirectoryService {
         return new DirectoryPage(summaries(pageOfEmployees, rates), query.page(), query.size(), ranked.size());
     }
 
+    /** One employee with current pay, or nothing if there is no such person. */
+    public java.util.Optional<EmployeeSummary> find(UUID id) {
+        return store.byId(id).map(employee -> summaries(List.of(employee), exchangeRates.snapshot()).get(0));
+    }
+
     public FilterOptions filterOptions() {
         return new FilterOptions(
                 Arrays.asList(Country.values()),

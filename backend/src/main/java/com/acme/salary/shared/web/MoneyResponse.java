@@ -1,12 +1,12 @@
-package com.acme.salary.employees.web;
+package com.acme.salary.shared.web;
 
 import com.acme.salary.shared.domain.Money;
 import com.acme.salary.shared.domain.Rounding;
 
 /** Money as the API shows it: a decimal string rounded for display, with its currency code. */
-record MoneyResponse(String amount, String currency) {
+public record MoneyResponse(String amount, String currency) {
 
-    static MoneyResponse from(Money money) {
+    public static MoneyResponse from(Money money) {
         if (money == null) {
             return null;
         }

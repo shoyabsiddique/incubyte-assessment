@@ -58,6 +58,10 @@ public class EmployeeDirectoryStore {
         return entityManager.createQuery(criteria).getResultList();
     }
 
+    public java.util.Optional<EmployeeEntity> byId(UUID id) {
+        return employees.findById(id);
+    }
+
     /** The given employees in the order of {@code ids}. */
     public List<EmployeeEntity> byIdsInOrder(List<UUID> ids) {
         Map<UUID, EmployeeEntity> found = employees.findAllById(ids).stream()

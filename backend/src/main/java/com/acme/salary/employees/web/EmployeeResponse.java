@@ -1,6 +1,7 @@
 package com.acme.salary.employees.web;
 
 import com.acme.salary.employees.application.EmployeeSummary;
+import com.acme.salary.shared.web.MoneyResponse;
 
 record EmployeeResponse(
         String id,

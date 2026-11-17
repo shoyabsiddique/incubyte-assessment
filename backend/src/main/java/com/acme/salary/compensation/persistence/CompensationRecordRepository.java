@@ -10,6 +10,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface CompensationRecordRepository extends JpaRepository<CompensationRecordEntity, UUID> {
 
+    List<CompensationRecordEntity> findByEmployeeIdOrderByEffectiveStartDesc(UUID employeeId);
+
     /** Projection query: thousands of rows are read cheaply, with no entities kept in memory. */
     @Query("select new com.acme.salary.compensation.persistence.CurrentSalaryRow(r.employeeId, r.amount, r.currency) "
             + "from CompensationRecordEntity r where r.employeeId in :ids "
