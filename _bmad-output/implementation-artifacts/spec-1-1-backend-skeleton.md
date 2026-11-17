@@ -2,7 +2,7 @@
 title: 'Story 1.1: Backend skeleton'
 type: 'feature'
 created: '2026-11-18'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: 'bbfe9f0ef4655cbcdd1ef67325ff2ad78a6a7894'
