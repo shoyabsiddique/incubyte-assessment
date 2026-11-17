@@ -37,6 +37,11 @@ dependencies {
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+tasks.withType(JavaCompile).configureEach {
+	// Emit package-info classes so empty module packages are visible to ArchUnit.
+	options.compilerArgs << '-Xpkginfo:always'
+}
+
 tasks.named('test') {
 	// Fast tests only: domain, architecture and slice tests that need no Docker.
 	useJUnitPlatform {
