@@ -1,6 +1,6 @@
 ---
 title: ACME Salary Management
-status: draft
+status: final
 created: 2026-11-17
 updated: 2026-11-17
 ---
@@ -31,7 +31,7 @@ ACME Salary Management is a web application that becomes the system of record fo
 ## 3. Glossary
 
 - **Employee** — a person's profile: Employee ID, first name, last name, work email, job title, department, country, city, employment type, hire date, employment status.
-- **Compensation Record** — one salary period for an Employee: annual gross base salary, original currency, effective start date, effective end date. An Employee has many; at most one is **Current** (no end date).
+- **Compensation Record** — one salary period for an Employee: annual gross base salary, original currency, effective start date, effective end date. An Employee has many; the one whose date range covers today is **Current**, and at most one record is Current at a time.
 - **Salary Revision** — creating a new Current Compensation Record and closing the previous one. Records are never overwritten.
 - **Original Currency** — the currency a salary is stored in (the Employee's local currency).
 - **Reporting Currency** — USD. **USD Equivalent** = salary × the Exchange Rate for its Original Currency.
@@ -141,7 +141,17 @@ A script creates demo HR Manager accounts, Exchange Rates and 10,000 Employees w
 
 ## 6. Non-Goals
 
-Payroll processing and disbursement, tax calculations, attendance, leave management, performance management, bonuses, stock compensation, benefits administration, banking information, government identification data. Also: live exchange-rate integration, public sign-up, role-based permissions, statistical anomaly models, applying a Simulation to real salaries, and bulk import of Excel files `[NOTE FOR PM: reasonable v2 item since Excel is today's source]`.
+Each item is left out deliberately, with the reason.
+
+- **Payroll processing, disbursement, tax calculations, banking information:** a different product with regulatory weight; this one plans and analyzes pay, it does not pay people.
+- **Attendance, leave, performance management, benefits administration:** other HR domains that dilute the compensation focus.
+- **Bonuses and stock compensation:** v1 models annual gross base salary only, so comparisons stay clean and explainable.
+- **Government identification data and sensitive personal data:** not needed for compensation questions; storing it adds risk for no value.
+- **Live exchange-rate integration:** seeded, editable rates are predictable and testable, and avoid an external dependency.
+- **Public sign-up and role-based permissions:** the user base is a small set of trusted HR Managers; accounts are seeded.
+- **Statistical anomaly models (z-scores):** a plain 20%-from-median rule is something HR can explain and defend.
+- **Applying a Simulation to real salaries:** keeps planning safe; real changes go through audited revisions.
+- **Bulk Excel import:** `[NOTE FOR PM: reasonable v2 item since Excel is today's source]`; v1 ships with seeded data.
 
 The product stays focused on compensation management, analytics, auditability and basic compensation planning.
 
@@ -159,13 +169,12 @@ The product stays focused on compensation management, analytics, auditability an
 
 ## 9. Open Questions
 
-1. Which job titles and departments does the seed use, and how many? `[ASSUMPTION: about 8 departments, 25 job titles]`
-2. Should an employee ever be on a currency other than their country's? `[ASSUMPTION: no]`
+None blocking. Items below were resolved as assumptions and are open to revisit.
 
 ## 10. Assumptions Index
 
 - §4.4 Analytics include only Employees with active status.
-- §4.4/FR-9 One current exchange rate per currency; edits restate all USD Equivalents; rate edits are audited.
-- §9 Seed uses about 8 departments and 25 job titles.
-- §9 Currency always matches country.
-- FR-5 Backdating before the Current record's start date is not allowed; future-dated revisions are allowed `[ASSUMPTION]` and "Current" means the record whose range covers today.
+- FR-9 One current exchange rate per currency; edits restate all USD Equivalents; rate edits are audited.
+- FR-12 Seed uses about 8 departments and 25 job titles.
+- FR-4 An Employee's currency always matches their country.
+- FR-5 Backdating before the Current record's start date is not allowed; future-dated revisions are allowed and take effect on their start date.
