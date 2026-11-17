@@ -23,6 +23,11 @@ export class AppConfigService {
     this.baseUrl = config.apiBaseUrl.replace(/\/+$/, '');
   }
 
+  /** The API base URL, or null while the configuration is still loading. Never throws. */
+  get apiBaseUrlOrNull(): string | null {
+    return this.baseUrl;
+  }
+
   get apiBaseUrl(): string {
     if (this.baseUrl === null) {
       throw new Error('The app configuration is not loaded yet');

@@ -10,7 +10,12 @@ import { AuthService } from './auth.service';
  */
 export const authInterceptor: HttpInterceptorFn = (request, next) => {
   const auth = inject(AuthService);
-  const apiBaseUrl = inject(AppConfigService).apiBaseUrl;
+  const apiBaseUrl = inject(AppConfigService).apiBaseUrlOrNull;
+  if (apiBaseUrl === null) {
+    // The configuration is still loading (this call may be the config file itself), so there is
+    // no API address to match against yet.
+    return next(request);
+  }
 
   const isApiCall = request.url.startsWith(apiBaseUrl);
   const token = auth.token();

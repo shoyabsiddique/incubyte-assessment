@@ -22,7 +22,7 @@ describe('authInterceptor', () => {
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         provideRouter([]),
-        { provide: AppConfigService, useValue: { apiBaseUrl: API } },
+        { provide: AppConfigService, useValue: { apiBaseUrl: API, apiBaseUrlOrNull: API } },
       ],
     });
     client = TestBed.inject(HttpClient);
