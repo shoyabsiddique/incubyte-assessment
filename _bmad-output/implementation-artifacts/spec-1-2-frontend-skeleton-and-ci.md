@@ -2,7 +2,7 @@
 title: 'Story 1.2: Frontend skeleton and CI pipeline'
 type: 'feature'
 created: '2026-11-18'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: '11f2c5e5281d7d74da92358cd0186ec97bc72be0'
