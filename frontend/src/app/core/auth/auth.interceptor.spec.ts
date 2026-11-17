@@ -83,4 +83,23 @@ describe('authInterceptor', () => {
     expect(auth.isAuthenticated()).toBe(true);
     expect(navigate).not.toHaveBeenCalled();
   });
+
+  it('lets requests through before the configuration is loaded, such as loading the config itself', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClientTesting(),
+        provideRouter([]),
+      ],
+    });
+    const realClient = TestBed.inject(HttpClient);
+    const realHttp = TestBed.inject(HttpTestingController);
+
+    let body: unknown;
+    realClient.get('/config.json').subscribe((value) => (body = value));
+    realHttp.expectOne('/config.json').flush({ apiBaseUrl: 'http://api.test/api/v1' });
+
+    expect(body).toEqual({ apiBaseUrl: 'http://api.test/api/v1' });
+  });
 });
