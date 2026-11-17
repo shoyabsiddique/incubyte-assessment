@@ -2,12 +2,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   OnInit,
   inject,
   input,
   output,
   signal,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -74,6 +76,7 @@ const LABELS: Record<string, string> = {
 })
 export class EmployeeFormComponent implements OnInit {
   private readonly service = inject(EmployeeService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly mode = input.required<'create' | 'edit'>();
   readonly employee = input<EmployeeSummary | null>(null);
@@ -123,12 +126,18 @@ export class EmployeeFormComponent implements OnInit {
         hireDate: current.hireDate,
       });
     }
-    this.setCountry(this.form.controls.country.value);
+    this.form.controls.country.valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((code) => this.showCurrencyOf(code));
+    this.showCurrencyOf(this.form.controls.country.value);
   }
 
   /** Picking a country also decides the salary currency, which is never typed in. */
   setCountry(code: string): void {
     this.form.controls.country.setValue(code);
+  }
+
+  private showCurrencyOf(code: string): void {
     this.currency.set(COUNTRIES.find((c) => c.code === code)?.currency ?? null);
   }
 
