@@ -44,6 +44,18 @@ public class CompensationRecordEntity {
 
     protected CompensationRecordEntity() {}
 
+    /** A new open record: the salary in force from {@code effectiveStart} until it is revised. */
+    public static CompensationRecordEntity open(
+            UUID id, UUID employeeId, BigDecimal amount, String currency, LocalDate effectiveStart) {
+        CompensationRecordEntity record = new CompensationRecordEntity();
+        record.id = id;
+        record.employeeId = employeeId;
+        record.amount = amount;
+        record.currency = currency;
+        record.effectiveStart = effectiveStart;
+        return record;
+    }
+
     public UUID getId() {
         return id;
     }

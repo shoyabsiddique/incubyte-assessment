@@ -22,4 +22,5 @@ public record EmployeeSummary(
         LocalDate hireDate,
         EmploymentStatus status,
         Money salary,
-        Money salaryUsd) {}
+        Money salaryUsd,
+        long version) {}

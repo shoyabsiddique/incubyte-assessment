@@ -8,6 +8,10 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface EmployeeRepository extends JpaRepository<EmployeeEntity, UUID>, JpaSpecificationExecutor<EmployeeEntity> {
 
+    boolean existsByWorkEmailIgnoreCase(String workEmail);
+
+    boolean existsByWorkEmailIgnoreCaseAndIdNot(String workEmail, UUID id);
+
     @Query("select distinct e.department from EmployeeEntity e order by e.department")
     List<String> distinctDepartments();
 

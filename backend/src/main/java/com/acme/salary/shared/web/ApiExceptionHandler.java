@@ -1,6 +1,7 @@
 package com.acme.salary.shared.web;
 
 import com.acme.salary.shared.domain.DomainException;
+import com.acme.salary.shared.domain.ValidationFailedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -9,6 +10,7 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
@@ -23,6 +25,19 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
 
     private static final Logger log = LoggerFactory.getLogger(ApiExceptionHandler.class);
+
+    @ExceptionHandler(ValidationFailedException.class)
+    public ProblemDetail handleValidation(ValidationFailedException error) {
+        ProblemDetail problem = problem(HttpStatus.BAD_REQUEST, error.code(), error.getMessage());
+        problem.setProperty("errors", error.errors());
+        return problem;
+    }
+
+    /** A concurrent edit lost the race: the caller must reload and try again. */
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ProblemDetail handleConcurrentModification() {
+        return problem(HttpStatus.CONFLICT, "CONCURRENT_MODIFICATION", "The record was changed by someone else; reload it and try again");
+    }
 
     @ExceptionHandler(DomainException.class)
     public ProblemDetail handleDomainError(DomainException error) {

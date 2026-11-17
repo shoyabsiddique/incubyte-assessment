@@ -27,6 +27,11 @@ public final class Money implements Comparable<Money> {
         return new Money(new BigDecimal(amount), currency);
     }
 
+    /** The money as an audit or API value: a rounded decimal string with its currency code. */
+    public java.util.Map<String, String> displayMap() {
+        return java.util.Map.of("amount", Rounding.display(amount).toPlainString(), "currency", currency.getCurrencyCode());
+    }
+
     public BigDecimal amount() {
         return amount;
     }

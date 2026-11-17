@@ -1,6 +1,7 @@
 package com.acme.salary.employees.persistence;
 
 import com.acme.salary.employees.api.EmploymentStatus;
+import com.acme.salary.employees.domain.EmployeeDraft;
 import com.acme.salary.employees.api.EmploymentType;
 import com.acme.salary.shared.domain.Country;
 import jakarta.persistence.Column;
@@ -68,6 +69,28 @@ public class EmployeeEntity {
     private long version;
 
     protected EmployeeEntity() {}
+
+    public static EmployeeEntity create(UUID id, String employeeId, EmployeeDraft profile) {
+        EmployeeEntity employee = new EmployeeEntity();
+        employee.id = id;
+        employee.employeeId = employeeId;
+        employee.applyProfile(profile);
+        return employee;
+    }
+
+    /** Copies every profile field from the draft; Hibernate only writes the ones that really changed. */
+    public void applyProfile(EmployeeDraft profile) {
+        this.firstName = profile.firstName();
+        this.lastName = profile.lastName();
+        this.workEmail = profile.workEmail();
+        this.jobTitle = profile.jobTitle();
+        this.department = profile.department();
+        this.country = profile.country();
+        this.city = profile.city();
+        this.employmentType = profile.employmentType();
+        this.hireDate = profile.hireDate();
+        this.status = profile.status();
+    }
 
     public UUID getId() {
         return id;

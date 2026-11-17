@@ -74,7 +74,7 @@ public class EmployeeDirectoryService {
                     return new EmployeeSummary(
                             e.getId(), e.getEmployeeId(), e.getFirstName(), e.getLastName(), e.getWorkEmail(),
                             e.getJobTitle(), e.getDepartment(), e.getCountry(), e.getCity(), e.getEmploymentType(),
-                            e.getHireDate(), e.getStatus(), salary, salary == null ? null : rates.toUsd(salary));
+                            e.getHireDate(), e.getStatus(), salary, salary == null ? null : rates.toUsd(salary), e.getVersion());
                 })
                 .toList();
     }

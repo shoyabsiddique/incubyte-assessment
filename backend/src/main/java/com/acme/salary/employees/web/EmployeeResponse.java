@@ -18,12 +18,13 @@ record EmployeeResponse(
         String status,
         String hireDate,
         MoneyResponse salary,
-        MoneyResponse salaryUsd) {
+        MoneyResponse salaryUsd,
+        long version) {
 
     static EmployeeResponse from(EmployeeSummary e) {
         return new EmployeeResponse(
                 e.id().toString(), e.employeeId(), e.firstName(), e.lastName(), e.workEmail(), e.jobTitle(),
                 e.department(), e.country().name(), e.country().displayName(), e.city(), e.employmentType().name(),
-                e.status().name(), e.hireDate().toString(), MoneyResponse.from(e.salary()), MoneyResponse.from(e.salaryUsd()));
+                e.status().name(), e.hireDate().toString(), MoneyResponse.from(e.salary()), MoneyResponse.from(e.salaryUsd()), e.version());
     }
 }
