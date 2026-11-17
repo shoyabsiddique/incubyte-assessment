@@ -132,7 +132,11 @@ public final class SeedGenerator {
         List<BigDecimal> amounts = new ArrayList<>(Collections.nCopies(starts.size(), currentAmount));
         for (int i = starts.size() - 2; i >= 0; i--) {
             BigDecimal raise = BigDecimal.valueOf(1.04 + random.nextDouble() * 0.06);
-            amounts.set(i, roundToHundreds(amounts.get(i + 1).divide(raise, MoneyMath.CONTEXT)));
+            BigDecimal earlierAmount = roundToHundreds(amounts.get(i + 1).divide(raise, MoneyMath.CONTEXT));
+            if (earlierAmount.signum() <= 0 || earlierAmount.compareTo(amounts.get(i + 1)) >= 0) {
+                throw new IllegalStateException("Cannot build a rising salary history for employee " + d.number);
+            }
+            amounts.set(i, earlierAmount);
         }
 
         for (int i = 0; i < starts.size(); i++) {
@@ -181,6 +185,9 @@ public final class SeedGenerator {
                     only.effectiveEnd()));
             placed++;
         }
+        if (placed < DELIBERATE_OUTLIERS) {
+            throw new IllegalStateException("Only " + placed + " of " + DELIBERATE_OUTLIERS + " deliberate outliers could be placed");
+        }
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -220,9 +227,10 @@ public final class SeedGenerator {
     private static String uniqueEmail(String first, String last, int number, Set<String> used) {
         String base = (first + "." + last).toLowerCase(Locale.ROOT);
         String email = base + "@acme.example";
-        if (!used.add(email)) {
-            email = base + number + "@acme.example";
-            used.add(email);
+        int suffix = number;
+        while (!used.add(email)) {
+            email = base + suffix + "@acme.example";
+            suffix++;
         }
         return email;
     }
@@ -245,7 +253,8 @@ public final class SeedGenerator {
         counts.put(Country.UAE, 600);
         counts.put(Country.CANADA, 500);
         counts.put(Country.AUSTRALIA, 400);
-        return Map.copyOf(counts);
+        // Keep insertion order: Map.copyOf would iterate in an order that changes with every JVM launch.
+        return Collections.unmodifiableMap(counts);
     }
 
     /** Mutable working copy used while generating; turned into an immutable record at the end. */

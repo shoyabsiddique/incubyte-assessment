@@ -44,6 +44,15 @@ tasks.withType(JavaCompile).configureEach {
 	options.compilerArgs << '-Xpkginfo:always'
 }
 
+tasks.withType(Test).configureEach {
+	// Dates are handled in UTC everywhere, so tests must not depend on the machine's zone.
+	systemProperty 'user.timezone', 'UTC'
+}
+
+tasks.named('bootRun') {
+	jvmArgs '-Duser.timezone=UTC'
+}
+
 tasks.named('test') {
 	// Fast tests only: domain, architecture and slice tests that need no Docker.
 	useJUnitPlatform {

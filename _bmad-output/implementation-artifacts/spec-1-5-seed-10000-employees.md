@@ -2,7 +2,7 @@
 title: 'Story 1.5: Seed 10,000 employees'
 type: 'feature'
 created: '2026-11-18'
-status: 'in-progress'
+status: 'in-review'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: '40c871ededd7b3bc594ea0052d9d852112130166'
@@ -50,10 +50,10 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] Tests first: `SeedGeneratorTest` (counts, currencies, ids, emails, titles and departments, history chains, determinism, outliers, plausibility), schema integration test for every constraint row, `EmployeeSeedIT` (counts, determinism hash, idempotence, rollback, time budget), architecture rule tests -- test-first
-- [ ] `V4__employee.sql`, `V5__compensation_record.sql`, entities, enums -- schema and mapping validated by `ddl-auto=validate`
-- [ ] `seed/domain` generator and catalog; `seed/application` runner and multi-row writer -- the seed
-- [ ] `ArchitectureRules`, `application.properties`, UTC pinning, `.env.example`, backend notes -- rules and docs
+- [x] Tests first: `SeedGeneratorTest` (counts, currencies, ids, emails, titles and departments, history chains, determinism, outliers, plausibility), schema integration test for every constraint row, `EmployeeSeedIT` (counts, determinism hash, idempotence, rollback, time budget), architecture rule tests -- test-first
+- [x] `V4__employee.sql`, `V5__compensation_record.sql`, entities, enums -- schema and mapping validated by `ddl-auto=validate`
+- [x] `seed/domain` generator and catalog; `seed/application` runner and multi-row writer -- the seed
+- [x] `ArchitectureRules`, `application.properties`, UTC pinning, `.env.example`, backend notes -- rules and docs
 
 **Acceptance Criteria:**
 - Given an empty database, when the runner executes, then exactly 10,000 Employees exist in the stated counts, each with one open record, and it finishes in under 60 seconds on a local container.
@@ -63,3 +63,21 @@ context:
 ## Implementation Notes
 
 Seeding is run with `SPRING_PROFILES_ACTIVE=local,seed` (or `prod,seed`). Multi-row inserts keep the number of round trips small for the remote Hostinger database.
+
+## Review Triage Log
+
+| Finding | Verdict | Route | Evidence |
+|---|---|---|---|
+| Seed not reproducible across JVM launches: headcount iterated in an order that changes with every launch (all three reviewers) | high | patch (done) | Reproduced first: three separate JVM launches gave three different hashes. Fixed with an ordered map; the same launches now give one hash, pinned in `SeedGeneratorTest` together with the first employee's id, email and country |
+| No database guard against a second open record for one employee | high | patch (done) | Generated `open_marker` column with a unique key in V5; tests for rejecting a second open record and allowing a long closed chain |
+| Deliberate-outlier count only bounded loosely (12 to 40); silent shortfall possible | medium | patch (done) | Generator throws if fewer than 16 are placed; test now requires exactly 16 flagged, proving the natural spread flags nobody |
+| Stored rows never compared with generated data; swapped columns would pass | medium | patch (done) | `storedRowsMatchTheGeneratedDataFieldByField` checks first, chunk-boundary (499, 500, 501), middle and last employees with all their records |
+| Seed profile gating and runner execution unverified | medium | patch (done) | Test shows the runner bean is absent without the profile; `EmployeeSeedProfileIT` starts the app with `seed` and finds 10,000 employees and the 2 demo accounts |
+| Check-then-act race when two processes seed at once | medium | patch (done) | A duplicate-key failure while the table is now populated is treated as "someone else seeded"; test simulates it |
+| Currency checked for only 4 of 8 countries; country and type CHECKs untested | medium | patch (done) | Test derives the expected currency from `Country` for all 8; schema tests for unknown country and type and for accepting every `Country` value |
+| UTC check only compared a property string; JVM zone set only in `main` | medium | patch (done) | Gradle pins `user.timezone=UTC` for tests and `bootRun`; test asserts the JVM zone and the Hibernate setting |
+| Email fallback could collide; non-rising history not guarded; log of a possibly null count | low | patch (done) | Fallback loops until unique; generator throws instead of producing a bad history; runner requires a non-null count |
+| "Identifiers not random" test only checked uniqueness | low | patch (done) | Renamed to what it checks; the pinned first id and golden hash now prove determinism |
+| Terminated employees keep an open record | low | patch (done) | Documented in the V5 migration comment; analytics only read ACTIVE employees |
+| Entity mapping untested beyond startup validation; extra indexes slow inserts; three public constructors; raw SQL coupling of the seed; wall-clock budget may flake; packet size limits | low | rejected | Startup runs `ddl-auto=validate` over both entities; the indexes serve Story 1.6 filters; the seed is the one documented bypass; 500-row statements are about 125 KB |
+| Guard against running `seed` on a production database | medium (product decision) | rejected | Seeding Hostinger with `prod,seed` is the intended Story 7.1 flow; documented, not blocked |

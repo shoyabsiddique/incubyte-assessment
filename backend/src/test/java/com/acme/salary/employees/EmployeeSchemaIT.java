@@ -24,12 +24,16 @@ class EmployeeSchemaIT extends AbstractMariaDbIntegrationTest {
     }
 
     private String insertEmployee(String employeeId, String email, String status) {
+        return insertEmployee(employeeId, email, status, "INDIA", "FULL_TIME");
+    }
+
+    private String insertEmployee(String employeeId, String email, String status, String country, String type) {
         String id = UUID.randomUUID().toString();
         jdbc.update(
                 "INSERT INTO employee (id, employee_id, first_name, last_name, work_email, job_title, department, "
                         + "country, city, employment_type, hire_date, status) "
-                        + "VALUES (?, ?, 'Asha', 'Rao', ?, 'Software Engineer', 'Engineering', 'INDIA', 'Pune', 'FULL_TIME', '2020-01-15', ?)",
-                id, employeeId, email, status);
+                        + "VALUES (?, ?, 'Asha', 'Rao', ?, 'Software Engineer', 'Engineering', ?, 'Pune', ?, '2020-01-15', ?)",
+                id, employeeId, email, country, type, status);
         return id;
     }
 
@@ -43,8 +47,49 @@ class EmployeeSchemaIT extends AbstractMariaDbIntegrationTest {
     private org.springframework.core.env.Environment environment;
 
     @Test
-    void datesAreHandledInUtc() {
+    void datesAreHandledInUtcByBothTheJvmAndHibernate() {
+        assertThat(java.util.TimeZone.getDefault().getID()).isEqualTo("UTC");
         assertThat(environment.getProperty("spring.jpa.properties.hibernate.jdbc.time_zone")).isEqualTo("UTC");
+    }
+
+    @Test
+    void acceptsEveryCountryTheApplicationKnowsAbout() {
+        int n = 0;
+        for (com.acme.salary.shared.domain.Country country : com.acme.salary.shared.domain.Country.values()) {
+            insertEmployee("EMP-91000" + n, "country" + n + "@acme.example", "ACTIVE", country.name(), "FULL_TIME");
+            n++;
+        }
+
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM employee", Integer.class))
+                .isEqualTo(com.acme.salary.shared.domain.Country.values().length);
+    }
+
+    @Test
+    void rejectsAnUnknownCountryAndAnUnknownEmploymentType() {
+        assertThatThrownBy(() -> insertEmployee("EMP-900011", "c@acme.example", "ACTIVE", "FRANCE", "FULL_TIME"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+        assertThatThrownBy(() -> insertEmployee("EMP-900012", "t@acme.example", "ACTIVE", "INDIA", "INTERN"))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void rejectsASecondOpenRecordForTheSameEmployee() {
+        String employee = insertEmployee("EMP-900013", "open2@acme.example", "ACTIVE");
+        insertRecord(employee, "100.00", "INR", "2020-01-15", null);
+
+        assertThatThrownBy(() -> insertRecord(employee, "110.00", "INR", "2021-01-15", null))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    void allowsAnyNumberOfClosedRecordsPlusOneOpenRecord() {
+        String employee = insertEmployee("EMP-900014", "chain@acme.example", "ACTIVE");
+        insertRecord(employee, "100.00", "INR", "2020-01-15", "2021-01-14");
+        insertRecord(employee, "110.00", "INR", "2021-01-15", "2022-01-14");
+        insertRecord(employee, "120.00", "INR", "2022-01-15", null);
+
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM compensation_record WHERE employee_id = ?", Integer.class, employee))
+                .isEqualTo(3);
     }
 
     @Test

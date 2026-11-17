@@ -8,6 +8,9 @@ import com.acme.salary.shared.domain.Country;
 import com.acme.salary.shared.domain.ExchangeRates;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.HexFormat;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Currency;
@@ -30,6 +33,11 @@ class SeedGeneratorTest {
             Currency.getInstance("AED"), new BigDecimal("0.2723"),
             Currency.getInstance("CAD"), new BigDecimal("0.73"),
             Currency.getInstance("AUD"), new BigDecimal("0.65")));
+
+    private static final String GOLDEN_DIGEST = "e3eecda595598899ed07441053b7e93b6bd5771b638f216baf44261e2dc19aca";
+    private static final String FIRST_EMPLOYEE_ID = "c27e0a55-3b72-3668-9fbc-cee3f51b9a75";
+    private static final String FIRST_EMPLOYEE_EMAIL = "charlotte.smith@acme.example";
+    private static final Country FIRST_EMPLOYEE_COUNTRY = Country.AUSTRALIA;
 
     private static final List<SeedEmployee> DATA = SeedGenerator.generate(SEED, RATES);
 
@@ -82,7 +90,7 @@ class SeedGeneratorTest {
     }
 
     @Test
-    void identifiersAreUniqueAndNotRandom() {
+    void identifiersAreUnique() {
         Set<java.util.UUID> ids = new HashSet<>();
         DATA.forEach(e -> {
             assertThat(ids.add(e.id())).isTrue();
@@ -187,6 +195,40 @@ class SeedGeneratorTest {
         assertThat(india / usa).isBetween(0.2, 0.45);
     }
 
+    /**
+     * Pinned to a fixed value so a change in output between JVM launches fails the build. Two runs
+     * inside one JVM (the other determinism tests) cannot see order that varies per launch.
+     */
+    @Test
+    void producesTheSameDataInEveryJvmLaunch() throws Exception {
+        assertThat(digestOf(DATA)).isEqualTo(GOLDEN_DIGEST);
+    }
+
+    @Test
+    void theFirstEmployeeIsPinnedToKnownValues() {
+        SeedEmployee first = DATA.stream().filter(e -> e.employeeId().equals("EMP-000001")).findFirst().orElseThrow();
+
+        assertThat(first.id()).hasToString(FIRST_EMPLOYEE_ID);
+        assertThat(first.workEmail()).isEqualTo(FIRST_EMPLOYEE_EMAIL);
+        assertThat(first.country()).isEqualTo(FIRST_EMPLOYEE_COUNTRY);
+    }
+
+    private static String digestOf(List<SeedEmployee> employees) throws Exception {
+        MessageDigest digest = MessageDigest.getInstance("SHA-256");
+        for (SeedEmployee e : employees) {
+            String row = String.join("|", e.id().toString(), e.employeeId(), e.firstName(), e.lastName(), e.workEmail(),
+                    e.jobTitle(), e.department(), e.country().name(), e.city(), e.employmentType().name(),
+                    e.hireDate().toString(), e.status().name());
+            digest.update(row.getBytes(StandardCharsets.UTF_8));
+            for (SeedCompensation c : e.compensation()) {
+                String record = String.join("|", c.id().toString(), c.amount().toPlainString(),
+                        c.currency().getCurrencyCode(), c.effectiveStart().toString(), String.valueOf(c.effectiveEnd()));
+                digest.update(record.getBytes(StandardCharsets.UTF_8));
+            }
+        }
+        return HexFormat.of().formatHex(digest.digest());
+    }
+
     @Test
     void sameSeedGivesIdenticalDataAndAnotherSeedDoesNot() {
         List<SeedEmployee> again = SeedGenerator.generate(SEED, RATES);
@@ -197,11 +239,8 @@ class SeedGeneratorTest {
     }
 
     @Test
-    void sixteenDeliberateOutliersStandOutWhileNaturalSpreadStaysInsideTwentyPercent() {
-        int flagged = flaggedByTheTwentyPercentRule();
-
-        // 16 deliberate outliers; a handful more may exist only through very small peer-group medians
-        assertThat(flagged).isBetween(12, 40);
+    void exactlySixteenDeliberateOutliersStandOutAndTheNaturalSpreadFlagsNobodyElse() {
+        assertThat(flaggedByTheTwentyPercentRule()).isEqualTo(16);
     }
 
     // ---- helpers ------------------------------------------------------------------------------
