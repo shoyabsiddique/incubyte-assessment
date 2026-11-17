@@ -3,6 +3,7 @@ package com.acme.salary.compensation.application;
 import com.acme.salary.compensation.api.ExchangeRateQuery;
 import com.acme.salary.compensation.persistence.ExchangeRateEntity;
 import com.acme.salary.compensation.persistence.ExchangeRateRepository;
+import com.acme.salary.shared.domain.Country;
 import com.acme.salary.shared.domain.ExchangeRates;
 import java.math.BigDecimal;
 import java.util.Currency;
@@ -27,6 +28,9 @@ public class ExchangeRateService implements ExchangeRateQuery {
         for (ExchangeRateEntity entity : repository.findAll()) {
             rates.put(Currency.getInstance(entity.getCurrency()), entity.getRateToUsd());
         }
-        return ExchangeRates.of(rates);
+        ExchangeRates snapshot = ExchangeRates.of(rates);
+        // A table missing a supported currency fails here, not at the first conversion of it.
+        snapshot.requireRatesFor(Country.supportedCurrencies());
+        return snapshot;
     }
 }

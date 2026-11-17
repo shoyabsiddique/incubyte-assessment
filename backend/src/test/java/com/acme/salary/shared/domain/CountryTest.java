@@ -52,5 +52,7 @@ class CountryTest {
         assertThat(Country.fromDisplayName("india")).contains(Country.INDIA);
         assertThat(Country.fromDisplayName("  United Kingdom ")).contains(Country.UK);
         assertThat(Country.fromDisplayName("Atlantis")).isEmpty();
+        assertThat(Country.fromDisplayName(null)).isEmpty();
+        assertThat(Country.fromDisplayName("   ")).isEmpty();
     }
 }

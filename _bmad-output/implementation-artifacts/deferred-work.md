@@ -16,3 +16,6 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-2-frontend-skeleton-and-ci.md`
   summary: Confirm the CI workflow with a first green run once a GitHub remote exists.
   evidence: The workflow was only validated structurally; action versions, Docker for Testcontainers and the Gradle wrapper permissions are unproven until it runs.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-3-money-and-exchange-rates.md`
+  summary: Confirm the Hostinger database engine and version enforces CHECK constraints (MariaDB 10.2 or later, MySQL 8.0.16 or later).
+  evidence: The exchange_rate table relies on CHECK constraints for positive rates and USD equal to 1; older engines accept the constraint syntax but do not enforce it.

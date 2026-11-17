@@ -5,8 +5,9 @@ import java.util.Currency;
 import java.util.Objects;
 
 /**
- * An amount in one currency. Arithmetic is exact to {@link MoneyMath#CONTEXT} and never rounds
- * to cents; use {@link Rounding} only when presenting a value.
+ * An amount in one currency. Arithmetic keeps up to 34 significant digits
+ * ({@link MoneyMath#CONTEXT}) and never rounds to cents, so a value is only rounded to 2 decimal
+ * places when presented, through {@link Rounding}.
  */
 public final class Money implements Comparable<Money> {
 

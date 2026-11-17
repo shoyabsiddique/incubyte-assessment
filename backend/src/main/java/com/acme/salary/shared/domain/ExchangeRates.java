@@ -1,16 +1,22 @@
 package com.acme.salary.shared.domain;
 
 import java.math.BigDecimal;
+import java.util.Currency;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
-import java.util.Currency;
+import java.util.stream.Collectors;
 
 /**
- * An immutable snapshot of rates to USD. A request loads one snapshot and uses it throughout, so
+ * An immutable snapshot of rates to USD.
+ *
+ * <p>Rates may have at most {@value #MAX_DECIMAL_PLACES} decimal places, the precision the table
+ * stores, so a value never changes when it is saved and read back. A request loads one snapshot and uses it throughout, so
  * every figure in a response is converted consistently. USD is always present at exactly 1.
  */
 public final class ExchangeRates {
+
+    public static final int MAX_DECIMAL_PLACES = 8;
 
     private static final Currency USD = Currency.getInstance("USD");
 
@@ -26,6 +32,10 @@ public final class ExchangeRates {
             if (rate == null || rate.signum() <= 0) {
                 throw new IllegalArgumentException(
                         "Exchange rate for " + currency.getCurrencyCode() + " must be greater than 0");
+            }
+            if (rate.stripTrailingZeros().scale() > MAX_DECIMAL_PLACES) {
+                throw new IllegalArgumentException("Exchange rate for " + currency.getCurrencyCode()
+                        + " has more than " + MAX_DECIMAL_PLACES + " decimal places");
             }
             if (currency.equals(USD) && rate.compareTo(BigDecimal.ONE) != 0) {
                 throw new IllegalArgumentException("The USD rate is always 1, not " + rate);
@@ -46,6 +56,15 @@ public final class ExchangeRates {
             throw new MissingExchangeRateException(currency);
         }
         return rate;
+    }
+
+    /** Fails with every currency in {@code required} that this snapshot cannot convert. */
+    public void requireRatesFor(Set<Currency> required) {
+        Set<Currency> missing =
+                required.stream().filter(c -> !ratesToUsd.containsKey(c)).collect(Collectors.toSet());
+        if (!missing.isEmpty()) {
+            throw new MissingExchangeRateException(missing);
+        }
     }
 
     public Money toUsd(Money money) {

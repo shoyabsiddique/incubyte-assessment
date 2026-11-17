@@ -2,7 +2,7 @@
 title: 'Story 1.3: Money and exchange-rate conversion'
 type: 'feature'
 created: '2026-11-18'
-status: 'in-progress'
+status: 'in-review'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: '0486d3633fa54faf16a62bad5d634c73b063372f'
@@ -51,11 +51,11 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] `backend/src/test/.../shared/domain/*Test.java` -- write failing tests first for `Money`, `Rounding`, `Country`, `ExchangeRates` covering every matrix row -- test-first
-- [ ] `backend/src/main/.../shared/domain/` -- implement `Money`, `Rounding`, `Country`, `ExchangeRates`, `MissingExchangeRateException` -- the kernel
-- [ ] `backend/src/main/resources/db/migration/V2__exchange_rate.sql` -- create table, CHECK, insert eight illustrative initial rates -- reference data
-- [ ] `backend/src/test/.../compensation/ExchangeRateSnapshotIT.java` -- failing integration test: snapshot from the database has all eight currencies, USD 1, converts a known amount -- proves migration, entity mapping and `ddl-auto=validate`
-- [ ] `compensation/{persistence,application,api}` -- JPA entity with `@Version`, repository, `ExchangeRateService` implementing `ExchangeRateQuery.snapshot()` -- load the current snapshot
+- [x] `backend/src/test/.../shared/domain/*Test.java` -- write failing tests first for `Money`, `Rounding`, `Country`, `ExchangeRates` covering every matrix row -- test-first
+- [x] `backend/src/main/.../shared/domain/` -- implement `Money`, `Rounding`, `Country`, `ExchangeRates`, `MissingExchangeRateException` -- the kernel
+- [x] `backend/src/main/resources/db/migration/V2__exchange_rate.sql` -- create table, CHECK, insert eight illustrative initial rates -- reference data
+- [x] `backend/src/test/.../compensation/ExchangeRateSnapshotIT.java` -- failing integration test: snapshot from the database has all eight currencies, USD 1, converts a known amount -- proves migration, entity mapping and `ddl-auto=validate`
+- [x] `compensation/{persistence,application,api}` -- JPA entity with `@Version`, repository, `ExchangeRateService` implementing `ExchangeRateQuery.snapshot()` -- load the current snapshot
 
 **Acceptance Criteria:**
 - Given the matrix, when the unit tests run, then all pass without a Spring context or database.
@@ -65,3 +65,20 @@ context:
 ## Implementation Notes
 
 The initial rates are illustrative demo values (approximate, not live), editable later in Epic 3.
+
+## Review Triage Log
+
+| Finding | Verdict | Route | Evidence |
+|---|---|---|---|
+| Snapshot accepted a table missing a supported currency; the failure only appeared at the first conversion | medium | patch (done) | `ExchangeRates.requireRatesFor` plus the service check at load time; unit test names every missing currency |
+| Database check that USD is always 1 untested; the XXX insert in the positive-rate test could pollute the shared database | medium | patch (done) | New integration test updates USD to 1.1 and expects rejection, with cleanup in `finally` for both tests |
+| Rates with more than 8 decimal places accepted in memory but would round when stored | medium | patch (done) | `ExchangeRates.of` rejects them (trailing zeros ignored); tests added |
+| Javadoc said arithmetic was exact and never rounded, but DECIMAL128 rounds at 34 digits | low | patch (done) | `Money` and `Rounding` documentation now state the 34-digit context |
+| `MissingExchangeRateException` did not expose which currencies | low | patch (done) | `currencies()` added, tested |
+| `Country.supportedCurrencies()` rebuilt on every call; null/blank `fromDisplayName` untested; import order and a fully-qualified `HashMap` in a test | low | patch (done) | Constant set, two assertions, tidy-ups |
+| Bad currency row breaks the snapshot with a raw exception | low | rejected | Only reachable by hand-editing the table; the `Currency` error already names the bad code |
+| Null arguments give bare NullPointerExceptions; `Money.times` accepts zero or negative factors | low | rejected | Programmer errors; a money type must allow negative amounts for differences |
+| `Rounding.display` always uses 2 decimal places | low | rejected | Fixed by the spec; all eight currencies use 2; revisit only if a 0- or 3-decimal currency is added |
+| Snapshot not enforced once per request | low | rejected | Callers load it once; request-scoped caching belongs to the stories that serve requests |
+| Demo rates live in a versioned migration with no audit columns | low | rejected | Rates become editable and audited in Epic 3 |
+| CHECK constraints not enforced on MariaDB before 10.2 or MySQL before 8.0.16 | medium (unverified) | defer | Only matters if Hostinger runs an old engine; settle with the open engine/version check |

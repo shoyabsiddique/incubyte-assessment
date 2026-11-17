@@ -3,7 +3,10 @@ package com.acme.salary.shared.domain;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/** The only place money is rounded: half-up to two decimal places, for presentation only. */
+/**
+ * The only place money is rounded to cents: half-up to two decimal places, for presentation only.
+ * (Arithmetic itself keeps 34 significant digits, see {@link MoneyMath}.)
+ */
 public final class Rounding {
 
     public static final int DISPLAY_SCALE = 2;

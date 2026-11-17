@@ -17,6 +17,9 @@ public enum Country {
     CANADA("Canada", "CAD"),
     AUSTRALIA("Australia", "AUD");
 
+    private static final Set<Currency> SUPPORTED_CURRENCIES =
+            Arrays.stream(values()).map(Country::currency).collect(Collectors.toUnmodifiableSet());
+
     private final String displayName;
     private final Currency currency;
 
@@ -35,7 +38,7 @@ public enum Country {
 
     /** Every currency a salary can be stored in. */
     public static Set<Currency> supportedCurrencies() {
-        return Arrays.stream(values()).map(Country::currency).collect(Collectors.toUnmodifiableSet());
+        return SUPPORTED_CURRENCIES;
     }
 
     public static Optional<Country> fromDisplayName(String name) {

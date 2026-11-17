@@ -69,7 +69,22 @@ class ExchangeRateSnapshotIT extends AbstractMariaDbIntegrationTest {
 
     @Test
     void theDatabaseRefusesANonPositiveRate() {
-        assertThatThrownBy(() -> jdbc.update("INSERT INTO exchange_rate (currency, rate_to_usd, version) VALUES ('XXX', 0, 0)"))
-                .isInstanceOf(DataIntegrityViolationException.class);
+        try {
+            assertThatThrownBy(() -> jdbc.update(
+                            "INSERT INTO exchange_rate (currency, rate_to_usd, version) VALUES ('XXX', 0, 0)"))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        } finally {
+            jdbc.update("DELETE FROM exchange_rate WHERE currency = 'XXX'");
+        }
+    }
+
+    @Test
+    void theDatabaseRefusesAUsdRateThatIsNotOne() {
+        try {
+            assertThatThrownBy(() -> jdbc.update("UPDATE exchange_rate SET rate_to_usd = 1.1 WHERE currency = 'USD'"))
+                    .isInstanceOf(DataIntegrityViolationException.class);
+        } finally {
+            jdbc.update("UPDATE exchange_rate SET rate_to_usd = 1 WHERE currency = 'USD'");
+        }
     }
 }

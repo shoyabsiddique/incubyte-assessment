@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.math.BigDecimal;
 import java.util.Currency;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class ExchangeRatesTest {
@@ -76,8 +78,37 @@ class ExchangeRatesTest {
     }
 
     @Test
+    void rejectsRatesWithMoreDecimalPlacesThanTheDatabaseCanStore() {
+        assertThatThrownBy(() -> ExchangeRates.of(Map.of(INR, new BigDecimal("0.123456789"))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("INR")
+                .hasMessageContaining("8 decimal places");
+        // trailing zeros are not real precision
+        assertThat(ExchangeRates.of(Map.of(INR, new BigDecimal("0.0120000000"))).rateToUsd(INR))
+                .isEqualByComparingTo("0.012");
+    }
+
+    @Test
+    void reportsEverySupportedCurrencyThatHasNoRate() {
+        Set<Currency> required = Set.of(INR, EUR, Currency.getInstance("GBP"));
+
+        assertThatThrownBy(() -> rates.requireRatesFor(required))
+                .isInstanceOf(MissingExchangeRateException.class)
+                .hasMessageContaining("EUR")
+                .hasMessageContaining("GBP");
+        rates.requireRatesFor(Set.of(INR, USD));
+    }
+
+    @Test
+    void theMissingRateExceptionNamesTheCurrencies() {
+        assertThatThrownBy(() -> rates.rateToUsd(EUR))
+                .isInstanceOfSatisfying(MissingExchangeRateException.class,
+                        e -> assertThat(e.currencies()).containsExactly(EUR));
+    }
+
+    @Test
     void theSnapshotIsImmutable() {
-        java.util.HashMap<Currency, BigDecimal> source = new java.util.HashMap<>();
+        Map<Currency, BigDecimal> source = new HashMap<>();
         source.put(INR, new BigDecimal("0.012"));
         ExchangeRates snapshot = ExchangeRates.of(source);
 
