@@ -141,6 +141,38 @@ class AuthenticationIT extends AbstractMariaDbIntegrationTest {
     }
 
     @Test
+    void aSignedInUserCannotReachActuatorEndpointsThatAreNotExposed() throws Exception {
+        String token = tokenFor(login(email, PASSWORD));
+
+        for (String path : new String[] {"/actuator/env", "/actuator/beans", "/actuator/metrics"}) {
+            assertThat(get(path, token).statusCode()).as(path).isEqualTo(404);
+        }
+    }
+
+    @Test
+    void aWrongContentTypeIsReportedAsAProblemNotAsFailedAuthentication() throws Exception {
+        HttpRequest request = HttpRequest.newBuilder(uri("/api/v1/auth/login"))
+                .header("Content-Type", "text/plain")
+                .POST(HttpRequest.BodyPublishers.ofString("hello"))
+                .build();
+
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        assertThat(response.statusCode()).isEqualTo(415);
+        assertThat(JSON.readTree(response.body()).get("code").asString()).isEqualTo("UNSUPPORTED_MEDIA_TYPE");
+    }
+
+    @Test
+    void aWrongMethodIsReportedAsAProblem() throws Exception {
+        String token = tokenFor(login(email, PASSWORD));
+
+        HttpResponse<String> response = get("/api/v1/auth/login", token);
+
+        assertThat(response.statusCode()).isEqualTo(405);
+        assertThat(JSON.readTree(response.body()).get("code").asString()).isEqualTo("METHOD_NOT_ALLOWED");
+    }
+
+    @Test
     void healthAndInfoStayPublic() throws Exception {
         assertThat(get("/actuator/health", null).statusCode()).isEqualTo(200);
         assertThat(get("/actuator/info", null).statusCode()).isEqualTo(200);

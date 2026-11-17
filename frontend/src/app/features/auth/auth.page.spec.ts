@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { Router, provideRouter } from '@angular/router';
+import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { AppConfigService } from '../../core/config/app-config.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -13,13 +13,19 @@ describe('SignInPage', () => {
   let http: HttpTestingController;
   let navigateByUrl: ReturnType<typeof vi.spyOn>;
 
-  async function render() {
+  async function render(returnUrl?: string) {
     await TestBed.configureTestingModule({
       imports: [SignInPage],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { queryParamMap: convertToParamMap(returnUrl ? { returnUrl } : {}) },
+          },
+        },
         { provide: AppConfigService, useValue: { apiBaseUrl: 'http://api.test/api/v1' } },
       ],
     }).compileComponents();
@@ -75,6 +81,69 @@ describe('SignInPage', () => {
 
     expect(TestBed.inject(AuthService).isAuthenticated()).toBe(true);
     expect(navigateByUrl).toHaveBeenCalledWith('/dashboard');
+  });
+
+  function submitWith(fixture: { nativeElement: HTMLElement }) {
+    const page = fixture.nativeElement;
+    fill(page, 'priya@acme.example', 'secret');
+    (page.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+  }
+
+  const SESSION = {
+    accessToken: 'tok',
+    tokenType: 'Bearer',
+    expiresIn: 3600,
+    user: { id: 'u-1', email: 'priya@acme.example', displayName: 'Priya Nair' },
+  };
+
+  it('returns the user to the page they were heading for', async () => {
+    const fixture = await render('/employees');
+
+    submitWith(fixture);
+    http.expectOne(LOGIN_URL).flush(SESSION);
+    await fixture.whenStable();
+
+    expect(navigateByUrl).toHaveBeenCalledWith('/employees');
+  });
+
+  it('ignores a return address that could lead off the site or back to sign-in', async () => {
+    for (const unsafe of [
+      'https://evil.example',
+      '//evil.example',
+      '/\\evil.example',
+      '/auth?x=1',
+      'employees',
+    ]) {
+      TestBed.resetTestingModule();
+      const fixture = await render(unsafe);
+
+      submitWith(fixture);
+      http.expectOne(LOGIN_URL).flush(SESSION);
+      await fixture.whenStable();
+
+      expect(navigateByUrl).toHaveBeenCalledWith('/dashboard');
+    }
+  });
+
+  it('says the service is unavailable, not that the password is wrong, when sign-in cannot be completed', async () => {
+    for (const failure of [
+      { status: 500, statusText: 'Server Error' },
+      { status: 0, statusText: 'Unknown Error' },
+    ]) {
+      TestBed.resetTestingModule();
+      const fixture = await render();
+
+      submitWith(fixture);
+      http.expectOne(LOGIN_URL).flush({}, failure);
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      const message = (fixture.nativeElement as HTMLElement).querySelector(
+        '[role="alert"]',
+      )?.textContent;
+      expect(message).toContain('unavailable');
+      expect(message).not.toContain('Invalid email or password');
+    }
   });
 
   it('shows the generic failure message and keeps the user on the page', async () => {

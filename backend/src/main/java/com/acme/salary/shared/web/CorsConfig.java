@@ -9,16 +9,13 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-/** Browsers may call the API only from the configured frontend origins; none are allowed by default. */
+/** Browsers may call the API only from the configured frontend origins. */
 @Configuration(proxyBeanMethods = false)
 public class CorsConfig {
 
     @Bean
-    CorsConfigurationSource corsConfigurationSource(@Value("${app.cors.allowed-origins:}") String allowedOrigins) {
-        List<String> origins = Arrays.stream(allowedOrigins.split(","))
-                .map(String::trim)
-                .filter(origin -> !origin.isEmpty())
-                .toList();
+    CorsConfigurationSource corsConfigurationSource(@Value("${app.cors.allowed-origins}") String allowedOrigins) {
+        List<String> origins = parseOrigins(allowedOrigins);
 
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(origins);
@@ -30,5 +27,20 @@ public class CorsConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
+    }
+
+    /** At least one explicit origin is required: an empty list would silently block every browser. */
+    static List<String> parseOrigins(String allowedOrigins) {
+        List<String> origins = Arrays.stream(allowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origin -> !origin.isEmpty())
+                .toList();
+        if (origins.isEmpty()) {
+            throw new IllegalArgumentException("app.cors.allowed-origins must list at least one origin");
+        }
+        if (origins.contains("*")) {
+            throw new IllegalArgumentException("app.cors.allowed-origins must not use a wildcard");
+        }
+        return origins;
     }
 }

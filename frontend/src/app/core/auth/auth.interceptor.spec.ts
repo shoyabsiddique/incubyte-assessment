@@ -57,6 +57,23 @@ describe('authInterceptor', () => {
     ).toBe(false);
   });
 
+  it('never sends the token to an address that merely starts like the API address', () => {
+    auth.establishSession('tok', USER);
+
+    for (const lookalike of [`${API}.evil.example/steal`, `${API}-other/steal`, `${API}x`]) {
+      client.get(lookalike).subscribe();
+      expect(http.expectOne(lookalike).request.headers.has('Authorization')).toBe(false);
+    }
+  });
+
+  it('does not attach a stale token to the sign-in call itself', () => {
+    auth.establishSession('stale-token', USER);
+
+    client.post(`${API}/auth/login`, {}).subscribe();
+
+    expect(http.expectOne(`${API}/auth/login`).request.headers.has('Authorization')).toBe(false);
+  });
+
   it('signs out and goes to the sign-in page when the API answers 401', () => {
     auth.establishSession('tok', USER);
 

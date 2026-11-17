@@ -19,3 +19,15 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-3-money-and-exchange-rates.md`
   summary: Confirm the Hostinger database engine and version enforces CHECK constraints (MariaDB 10.2 or later, MySQL 8.0.16 or later).
   evidence: The exchange_rate table relies on CHECK constraints for positive rates and USD equal to 1; older engines accept the constraint syntax but do not enforce it.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-4-sign-in-and-sign-out.md`
+  summary: Add login brute-force protection (throttling or lockout) and audit successful and failed sign-ins.
+  evidence: The login endpoint accepts unlimited attempts and records none; relevant once the app is public (Epic 7), and sign-in auditing fits with the audit work in Epic 2.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-4-sign-in-and-sign-out.md`
+  summary: Decide token revocation and refresh, issuer/audience claims, secret rotation procedure, password change or reset, and how real HR accounts are created after the demo seed.
+  evidence: Sign-out is client-side only and a stolen token stays valid for its full hour; the PRD scopes these out for v1, so document the limits in the README (Story 7.3).
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-4-sign-in-and-sign-out.md`
+  summary: Sign-in form accessibility (error tied to fields, focus management, per-field messages) and warning before the one-hour session ends.
+  evidence: The error is announced with role alert but not linked to inputs; a token expiring mid-form loses input.
+- source_spec: `_bmad-output/implementation-artifacts/spec-1-4-sign-in-and-sign-out.md`
+  summary: Ensure deployments never ship `config.json` pointing at localhost and serve it with short cache lifetime.
+  evidence: The shipped `public/config.json` defaults to http://localhost:8080/api/v1, so a missed override sends production traffic to localhost (Story 7.2).

@@ -15,6 +15,8 @@ public class AuthService {
 
     // BCrypt only uses the first 72 bytes; refusing longer input also bounds the hashing work.
     private static final int MAX_PASSWORD_BYTES = 72;
+    // The column holds at most 254 characters, so a longer email cannot belong to any account.
+    private static final int MAX_EMAIL_LENGTH = 254;
 
     private final AppUserRepository users;
     private final PasswordEncoder encoder;
@@ -30,7 +32,9 @@ public class AuthService {
 
     public LoginResult login(String email, String password) {
         String normalized = email == null ? "" : email.trim().toLowerCase(Locale.ROOT);
-        Optional<AppUserEntity> user = normalized.isEmpty() ? Optional.empty() : users.findByEmail(normalized);
+        Optional<AppUserEntity> user = normalized.isEmpty() || normalized.length() > MAX_EMAIL_LENGTH
+                ? Optional.empty()
+                : users.findByEmail(normalized);
 
         String candidate = password == null ? "" : password;
         if (candidate.getBytes(StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {

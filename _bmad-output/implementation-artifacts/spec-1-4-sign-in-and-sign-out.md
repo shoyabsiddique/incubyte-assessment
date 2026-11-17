@@ -2,7 +2,7 @@
 title: 'Story 1.4: Sign in and sign out'
 type: 'feature'
 created: '2026-11-18'
-status: 'in-progress'
+status: 'in-review'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: '13f26db98f3249a5381737d9e338f876691d3374'
@@ -55,11 +55,11 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] Backend tests first: password and token domain/unit tests, then `AuthenticationIT` covering every matrix row over real HTTP and MariaDB -- test-first
-- [ ] `backend/build.gradle`, `V3__app_user.sql`, `auth/*` -- security dependencies; `app_user` table (UUID `CHAR(36)`, unique case-insensitive email, BCrypt hash, display name); user entity and repository; login and me use cases; JWT issue and decode; security filter chain; Problem Details handler, entry point and access-denied handler in `shared/web`; CORS; `JwtSettings` validation -- backend feature
-- [ ] Demo HR accounts -- a seeder in `auth` that runs under the `local` and `seed` profiles only, creates two accounts if absent with the password from `DEMO_HR_PASSWORD` (local default is a documented dev value, required in `seed`); hashes at runtime, nothing in migrations -- AD-11 puts accounts in the seed runner, not a migration
-- [ ] Frontend tests first, then `core/config`, `core/auth` (service, interceptor, guard), sign-in page, shell changes (nav and Sign out only when signed in), guarded routes, `public/config.json`, adapted existing specs -- frontend feature
-- [ ] `.env.example`, `frontend/README.md` -- document `JWT_SECRET`, `DEMO_HR_PASSWORD`, `app.cors.allowed-origins` and the config file
+- [x] Backend tests first: password and token domain/unit tests, then `AuthenticationIT` covering every matrix row over real HTTP and MariaDB -- test-first
+- [x] `backend/build.gradle`, `V3__app_user.sql`, `auth/*` -- security dependencies; `app_user` table (UUID `CHAR(36)`, unique case-insensitive email, BCrypt hash, display name); user entity and repository; login and me use cases; JWT issue and decode; security filter chain; Problem Details handler, entry point and access-denied handler in `shared/web`; CORS; `JwtSettings` validation -- backend feature
+- [x] Demo HR accounts -- a seeder in `auth` that runs under the `local` and `seed` profiles only, creates two accounts if absent with the password from `DEMO_HR_PASSWORD` (local default is a documented dev value, required in `seed`); hashes at runtime, nothing in migrations -- AD-11 puts accounts in the seed runner, not a migration
+- [x] Frontend tests first, then `core/config`, `core/auth` (service, interceptor, guard), sign-in page, shell changes (nav and Sign out only when signed in), guarded routes, `public/config.json`, adapted existing specs -- frontend feature
+- [x] `.env.example`, `frontend/README.md` -- document `JWT_SECRET`, `DEMO_HR_PASSWORD`, `app.cors.allowed-origins` and the config file
 
 **Acceptance Criteria:**
 - Given the matrix, when backend unit and integration tests run, then all rows pass with Docker running.
@@ -70,3 +70,24 @@ context:
 ## Implementation Notes
 
 Deviation from the epic wording: accounts are created by a profile-gated seeder instead of the migration so no credential ever sits in version control (AD-11). The Story 1.5 seed runner will reuse this seeder for the `seed` profile.
+
+## Review Triage Log
+
+| Finding | Verdict | Route | Evidence |
+|---|---|---|---|
+| Interceptor matched the API address by prefix, so a lookalike address (`...v1.evil.example`, `...v1-other`) would receive the token | high | patch (done) | Match now requires the path boundary; tests cover three lookalikes |
+| A stale token was attached to the sign-in call itself, which the server then rejects | medium | patch (done) | Login call never carries a token; test added |
+| Sign-in page said "Invalid email or password" for server and network failures | medium | patch (done) | Only a 401 says that; others say the service is unavailable; tests for 500 and network error |
+| Guard dropped the target page; no safe return address | medium | patch (done) | Guard passes `returnUrl`; page returns there only for in-app paths (off-site, `//`, backslash and `/auth` ignored); tests and real browser check |
+| Blank page when `config.json` or bootstrap fails | medium | patch (done) | `main.ts` shows a message; real app wiring now tested in `app.config.spec.ts` (config loads, interceptor registered) |
+| No catch-all error handling; wrong content type or method gave misleading 401; Spring request errors not Problem Details | medium | patch (done) | Handler extends `ResponseEntityExceptionHandler`, adds codes, generic 500 that leaks nothing; integration tests for 415 and 405; verified on the running app |
+| Hand-rolled JSON in the security failure path did not escape control characters | low | patch (done) | Newline, tab and control characters escaped; test |
+| Seeder untested; blank, over-72-byte or placeholder password accepted; duplicate-email race crashes startup | medium | patch (done) | Seeder validates its password, tolerates a concurrent duplicate; unit and integration tests for idempotence, hashing and not overwriting |
+| Actuator test weakened to accept 401 and could not catch widened exposure | medium | patch (done) | Signed-in test requires 404 for env, beans and metrics |
+| Weak secret and placeholder values from `.env.example` accepted; committed local signing key | high | patch (done) | Placeholder prefix rejected for secret and seed password; local default is now a fresh random key per start (verified by running the app without `JWT_SECRET`) |
+| Token lifetime and BCrypt strength unchecked; blank CORS origins or wildcard silently accepted | medium | patch (done) | Positive lifetime and strength 4 to 31 enforced; CORS requires at least one explicit origin and rejects `*`; tests |
+| Email normalisation duplicated; oversized email reached the database | low | patch (done) | Entity normalises in its constructor; login rejects emails over 254 characters without querying; tests |
+| Vacuous test `storedPasswordsAreNeverComparedAsPlainText` | low | patch (done) | Removed, replaced by the long-email test |
+| Late 401 from an old request signs out a fresh session; expired token still shown until the next call; signed-in users can open `/auth`; sign-in form accessibility details | low | rejected | Rare or cosmetic; each fix adds state or complexity with no named harm today |
+| Roles, brute-force throttling, audit of sign-ins, token revocation, refresh, issuer and audience claims, password reset | medium (product decisions) | defer | PRD scopes one access level and no password reset; see deferred-work.md |
+| Missing 403 test, `me` null guard, local profile applying when none is set | low | rejected | No role-gated endpoint exists yet; behind `authenticated()`; the random local key removes the secret risk |

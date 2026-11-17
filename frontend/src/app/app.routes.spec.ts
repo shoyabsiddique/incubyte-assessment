@@ -72,7 +72,7 @@ describe('app routes', () => {
     it(`sends a signed-out visitor from /${feature.path} to the sign-in page`, async () => {
       const page = await open(`/${feature.path}`);
 
-      expect(TestBed.inject(Router).url).toBe('/auth');
+      expect(TestBed.inject(Router).url).toBe(`/auth?returnUrl=%2F${feature.path}`);
       expect(page.querySelector('h2')?.textContent).toContain('Sign in');
     });
   }
@@ -103,7 +103,7 @@ describe('app routes', () => {
   it('redirects the root to the sign-in page when signed out', async () => {
     await open('/');
 
-    expect(TestBed.inject(Router).url).toBe('/auth');
+    expect(TestBed.inject(Router).url).toBe('/auth?returnUrl=%2Fdashboard');
   });
 
   it('shows a not-found view for unknown paths', async () => {

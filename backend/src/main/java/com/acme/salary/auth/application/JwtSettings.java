@@ -17,6 +17,12 @@ public record JwtSettings(
 
     public JwtSettings {
         JwtSecret.of(jwtSecret);
+        if (tokenTtl == null || tokenTtl.isZero() || tokenTtl.isNegative()) {
+            throw new IllegalArgumentException("app.security.token-ttl must be a positive duration");
+        }
+        if (bcryptStrength < 4 || bcryptStrength > 31) {
+            throw new IllegalArgumentException("app.security.bcrypt-strength must be between 4 and 31");
+        }
     }
 
     public JwtSecret secret() {

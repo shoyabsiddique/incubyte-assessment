@@ -38,10 +38,10 @@ describe('authGuard', () => {
     expect(run()).toBe(true);
   });
 
-  it('sends a signed-out visitor to the sign-in page', () => {
+  it('sends a signed-out visitor to the sign-in page, remembering where they were going', () => {
     const result = run();
 
     expect(result).toBeInstanceOf(UrlTree);
-    expect((result as UrlTree).toString()).toBe('/auth');
+    expect((result as UrlTree).toString()).toBe('/auth?returnUrl=%2Femployees');
   });
 });

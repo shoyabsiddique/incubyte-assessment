@@ -36,6 +36,13 @@ class JwtSecretTest {
     }
 
     @Test
+    void rejectsTheExamplePlaceholderSoItCanNeverBeUsedForReal() {
+        assertThatThrownBy(() -> JwtSecret.of("change-me-to-a-long-random-value-of-at-least-32-bytes"))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("placeholder");
+    }
+
+    @Test
     void neverRevealsTheSecretWhenPrinted() {
         assertThat(JwtSecret.of("super-secret-value-super-secret-value").toString())
                 .doesNotContain("super-secret");

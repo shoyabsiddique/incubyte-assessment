@@ -36,6 +36,26 @@ class JwtSettingsTest {
     }
 
     @Test
+    void refusesATokenLifetimeThatIsNotPositive() {
+        runner.withPropertyValues("app.security.jwt-secret=" + "k".repeat(40), "app.security.token-ttl=PT0S")
+                .run(context -> {
+                    assertThat(context).hasFailed();
+                    assertThat(context.getStartupFailure()).hasStackTraceContaining("token-ttl");
+                });
+    }
+
+    @Test
+    void refusesABcryptStrengthOutsideTheSupportedRange() {
+        for (String strength : new String[] {"3", "32"}) {
+            runner.withPropertyValues("app.security.jwt-secret=" + "k".repeat(40), "app.security.bcrypt-strength=" + strength)
+                    .run(context -> {
+                        assertThat(context).hasFailed();
+                        assertThat(context.getStartupFailure()).hasStackTraceContaining("bcrypt-strength");
+                    });
+        }
+    }
+
+    @Test
     void refusesToStartWithoutASecret() {
         runner.run(context -> assertThat(context).hasFailed());
     }

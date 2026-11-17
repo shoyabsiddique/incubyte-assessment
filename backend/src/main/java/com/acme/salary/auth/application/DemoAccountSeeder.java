@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Component;
 public class DemoAccountSeeder implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(DemoAccountSeeder.class);
+    private static final int MAX_PASSWORD_BYTES = 72;
 
     private final AppUserRepository users;
     private final PasswordEncoder encoder;
@@ -29,6 +31,15 @@ public class DemoAccountSeeder implements ApplicationRunner {
 
     public DemoAccountSeeder(
             AppUserRepository users, PasswordEncoder encoder, @Value("${app.seed.hr-password}") String password) {
+        if (password == null || password.isBlank()) {
+            throw new IllegalStateException("DEMO_HR_PASSWORD must be set to create the demo accounts");
+        }
+        if (password.toLowerCase(java.util.Locale.ROOT).startsWith("change-me")) {
+            throw new IllegalStateException("DEMO_HR_PASSWORD is still the example placeholder; set a real one");
+        }
+        if (password.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
+            throw new IllegalStateException("DEMO_HR_PASSWORD must be at most 72 bytes, or nobody could sign in");
+        }
         this.users = users;
         this.encoder = encoder;
         this.password = password;
@@ -44,7 +55,11 @@ public class DemoAccountSeeder implements ApplicationRunner {
         if (users.existsByEmail(email)) {
             return;
         }
-        users.save(new AppUserEntity(UUID.randomUUID(), email, encoder.encode(password), displayName));
-        log.info("Created demo HR Manager account {}", email);
+        try {
+            users.save(new AppUserEntity(UUID.randomUUID(), email, encoder.encode(password), displayName));
+            log.info("Created demo HR Manager account {}", email);
+        } catch (DataIntegrityViolationException alreadyCreatedByAnotherInstance) {
+            log.info("Demo HR Manager account {} already exists", email);
+        }
     }
 }

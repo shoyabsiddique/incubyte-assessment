@@ -55,6 +55,24 @@ class ProblemDetailsTest {
     }
 
     @Test
+    void escapesControlCharactersSoTheBodyIsAlwaysValidJson() throws Exception {
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        ProblemJson.write(response, HttpStatus.UNAUTHORIZED, "UNAUTHENTICATED", "line one\nline\ttwo\u0001");
+
+        assertThat(response.getContentAsString()).contains("line one\\nline\\ttwo\\u0001");
+    }
+
+    @Test
+    void anUnexpectedFailureBecomesAGenericProblemWithoutLeakingDetails() {
+        ProblemDetail problem = handler.handleUnexpected(new IllegalStateException("database password is hunter2"));
+
+        assertThat(problem.getStatus()).isEqualTo(500);
+        assertThat(problem.getProperties()).containsEntry("code", "INTERNAL_ERROR");
+        assertThat(problem.getDetail()).doesNotContain("hunter2");
+    }
+
+    @Test
     void escapesQuotesAndBackslashesInTheDetail() throws Exception {
         MockHttpServletResponse response = new MockHttpServletResponse();
 

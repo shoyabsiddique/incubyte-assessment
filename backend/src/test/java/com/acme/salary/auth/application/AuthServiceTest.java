@@ -90,8 +90,10 @@ class AuthServiceTest {
     }
 
     @Test
-    void storedPasswordsAreNeverComparedAsPlainText() {
-        assertThat(priya.getPasswordHash()).startsWith("$2").doesNotContain("Right-Pass1");
-        verify(users, never()).save(org.mockito.ArgumentMatchers.any());
+    void anAbsurdlyLongEmailIsRejectedWithoutTouchingTheDatabase() {
+        assertThatThrownBy(() -> service.login("a".repeat(300) + "@acme.example", "Right-Pass1"))
+                .isInstanceOf(InvalidCredentialsException.class);
+
+        verify(users, never()).findByEmail(org.mockito.ArgumentMatchers.argThat(email -> email.length() > 254));
     }
 }

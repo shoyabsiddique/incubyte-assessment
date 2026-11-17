@@ -17,16 +17,17 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
     return next(request);
   }
 
-  const isApiCall = request.url.startsWith(apiBaseUrl);
+  // Match on the path boundary, so an address that merely starts like ours never gets the token.
+  const isApiCall = request.url === apiBaseUrl || request.url.startsWith(`${apiBaseUrl}/`);
+  const isLogin = request.url === `${apiBaseUrl}/auth/login`;
   const token = auth.token();
   const outgoing =
-    isApiCall && token
+    isApiCall && !isLogin && token
       ? request.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
       : request;
 
   return next(outgoing).pipe(
     catchError((error: unknown) => {
-      const isLogin = request.url === `${apiBaseUrl}/auth/login`;
       if (isApiCall && !isLogin && error instanceof HttpErrorResponse && error.status === 401) {
         auth.logout();
       }
