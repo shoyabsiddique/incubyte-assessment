@@ -1,7 +1,6 @@
 import { TestBed, ComponentFixture } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
-import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { AppConfigService } from '../../core/config/app-config.service';
@@ -57,7 +56,6 @@ describe('EmployeesPage', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([]),
-        provideNoopAnimations(),
         { provide: AppConfigService, useValue: { apiBaseUrl: API } },
       ],
     }).compileComponents();
@@ -209,9 +207,10 @@ describe('EmployeesPage', () => {
 
     nameHeader.click();
     await fixture.whenStable();
-    expect(lastListRequest().request.params.get('sort')).toBe('name,asc');
+    const ascending = lastListRequest();
+    expect(ascending.request.params.get('sort')).toBe('name,asc');
 
-    lastListRequest().flush(pageOf([employee(1)]));
+    ascending.flush(pageOf([employee(1)]));
     await fixture.whenStable();
     fixture.detectChanges();
     nameHeader.click();

@@ -1,0 +1,28 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: baseline;
+}
+
+.search-field {
+  min-width: 320px;
+}
+
+table {
+  width: 100%;
+}
+
+.number {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.error {
+  color: var(--mat-sys-error);
+}
+
+.empty {
+  padding: 24px;
+  text-align: center;
+}
