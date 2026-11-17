@@ -1,6 +1,7 @@
 package com.acme.salary;
 
 import org.junit.jupiter.api.Tag;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 
@@ -10,6 +11,7 @@ import org.springframework.context.annotation.Import;
  * Hibernate validating the schema. Needs Docker; run with {@code ./gradlew integrationTest}.
  */
 @Tag("integration")
+@ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Import(TestcontainersConfiguration.class)
 public abstract class AbstractMariaDbIntegrationTest {}

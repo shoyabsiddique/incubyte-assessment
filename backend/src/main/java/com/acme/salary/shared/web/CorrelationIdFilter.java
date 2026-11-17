@@ -39,15 +39,24 @@ public class CorrelationIdFilter extends OncePerRequestFilter {
         String id = resolve(request.getHeader(HEADER));
         MDC.put(MDC_KEY, id);
         response.setHeader(HEADER, id);
+        boolean failed = false;
         try {
             chain.doFilter(request, response);
+        } catch (IOException | ServletException | RuntimeException | Error e) {
+            // The container has not set an error status yet, so report the failure as a 500.
+            failed = true;
+            throw e;
         } finally {
-            log.info(
-                    "{} {} completed with status {}",
-                    request.getMethod(),
-                    request.getRequestURI(),
-                    response.getStatus());
-            MDC.remove(MDC_KEY);
+            try {
+                log.info(
+                        "{} {} completed with status {}",
+                        request.getMethod(),
+                        request.getRequestURI(),
+                        failed ? HttpServletResponse.SC_INTERNAL_SERVER_ERROR : response.getStatus());
+            } finally {
+                // Always clear the context so the ID cannot leak to the next request on this thread.
+                MDC.remove(MDC_KEY);
+            }
         }
     }
 

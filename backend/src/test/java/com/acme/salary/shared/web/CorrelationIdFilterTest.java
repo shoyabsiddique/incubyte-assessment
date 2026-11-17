@@ -1,6 +1,7 @@
 package com.acme.salary.shared.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import jakarta.servlet.FilterChain;
 import java.util.UUID;
@@ -78,11 +79,10 @@ class CorrelationIdFilterTest {
             throw new IllegalStateException("boom");
         };
 
-        try {
-            filter.doFilter(new MockHttpServletRequest(), new MockHttpServletResponse(), failing);
-        } catch (Exception expected) {
-            // the failure itself is not under test
-        }
+        assertThatThrownBy(() -> filter.doFilter(
+                        new MockHttpServletRequest(), new MockHttpServletResponse(), failing))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("boom");
 
         assertThat(MDC.get(CorrelationIdFilter.MDC_KEY)).isNull();
     }

@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 /**
- * The application starts with {@code ddl-auto=validate}, so reaching this test already proves
- * the entities match the schema. This checks Flyway really ran the baseline.
+ * The application starts with Flyway enabled and {@code ddl-auto=validate}. This checks Flyway
+ * really ran the baseline; schema validation starts to bite once the first entity exists.
  */
 class FlywayBaselineIT extends AbstractMariaDbIntegrationTest {
 

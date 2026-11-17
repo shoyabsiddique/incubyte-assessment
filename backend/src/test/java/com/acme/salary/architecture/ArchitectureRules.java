@@ -3,6 +3,7 @@ package com.acme.salary.architecture;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
@@ -10,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * The architecture rules from the spine (AD-1, AD-2), parameterised by base package so the same
@@ -42,7 +44,7 @@ final class ArchitectureRules {
                 .dependOnClassesThat()
                 .resideInAnyPackage(
                         "org.springframework..",
-                        "jakarta.persistence..",
+                        "jakarta..",
                         "org.hibernate..",
                         "com.fasterxml.jackson..",
                         "tools.jackson..")
@@ -83,8 +85,7 @@ final class ArchitectureRules {
                             .that()
                             .resideInAPackage(base + "." + module + "..")
                             .should()
-                            .dependOnClassesThat()
-                            .resideInAnyPackage(internalPackages(base, other))
+                            .dependOnClassesThat(internalTo(base, other))
                             .allowEmptyShould(true));
                 } else {
                     rules.add(noClasses()
@@ -111,6 +112,56 @@ final class ArchitectureRules {
                 .dependOnClassesThat()
                 .resideInAnyPackage(modulePackages)
                 .allowEmptyShould(true);
+    }
+
+    /** Inside a module the layers only point inwards: application never uses web. */
+    static ArchRule applicationDoesNotDependOnWeb(String base) {
+        return noClasses()
+                .that()
+                .resideInAPackage(base + "..application..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage(base + "..web..")
+                .allowEmptyShould(true);
+    }
+
+    static ArchRule persistenceDoesNotDependOnApplicationOrWeb(String base) {
+        return noClasses()
+                .that()
+                .resideInAPackage(base + "..persistence..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(base + "..application..", base + "..web..")
+                .allowEmptyShould(true);
+    }
+
+    /** A module's api is its published surface, so it must not expose or pull in internals. */
+    static ArchRule apiDependsOnNoInternalLayer(String base) {
+        return noClasses()
+                .that()
+                .resideInAPackage(base + "..api..")
+                .should()
+                .dependOnClassesThat()
+                .resideInAnyPackage(
+                        base + "..web..", base + "..application..", base + "..persistence..")
+                .allowEmptyShould(true);
+    }
+
+    /** Top-level packages under the base that are neither a known module nor the shared kernel. */
+    static Set<String> unknownTopLevelPackages(String base, JavaClasses classes) {
+        Set<String> unknown = new TreeSet<>();
+        String prefix = base + ".";
+        for (JavaClass c : classes) {
+            String pkg = c.getPackageName();
+            if (!pkg.startsWith(prefix)) {
+                continue;
+            }
+            String top = pkg.substring(prefix.length()).split("\\.")[0];
+            if (!MODULES.contains(top) && !SHARED.equals(top)) {
+                unknown.add(top);
+            }
+        }
+        return unknown;
     }
 
     static ArchRule modulesAreFreeOfCycles(String base) {
@@ -147,12 +198,10 @@ final class ArchitectureRules {
         return false;
     }
 
-    private static String[] internalPackages(String base, String module) {
-        return new String[] {
-            base + "." + module + ".web..",
-            base + "." + module + ".application..",
-            base + "." + module + ".domain..",
-            base + "." + module + ".persistence.."
-        };
+    /** Anything of the module that is not in its api package, including its root package. */
+    private static DescribedPredicate<JavaClass> internalTo(String base, String module) {
+        return JavaClass.Predicates.resideInAPackage(base + "." + module + "..")
+                .and(JavaClass.Predicates.resideOutsideOfPackage(base + "." + module + ".api.."))
+                .as("internal classes of module " + module);
     }
 }

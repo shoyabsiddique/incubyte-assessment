@@ -60,11 +60,38 @@ class ArchitectureRulesTest {
     }
 
     @Test
-    void specificForbiddenImportsAreEachCaught() {
-        // analytics may not touch employees at all; simulator may use analytics only via api.
-        List<ArchRule> rules = ArchitectureRules.moduleDependenciesFollowTheGraph(BAD);
-        long failing = rules.stream().filter(rule -> fails(rule, bad)).count();
-        assertThat(failing).isGreaterThanOrEqualTo(3);
+    void eachSpecificForbiddenCrossModuleImportIsCaught() {
+        List<String> failing = ArchitectureRules.moduleDependenciesFollowTheGraph(BAD).stream()
+                .filter(rule -> fails(rule, bad))
+                .map(ArchRule::getDescription)
+                .toList();
+
+        // analytics may not use employees at all
+        assertThat(failing).anyMatch(d -> d.contains("bad.analytics..") && d.contains("bad.employees.."));
+        // compensation may not use employees (the graph points the other way)
+        assertThat(failing).anyMatch(d -> d.contains("bad.compensation..") && d.contains("bad.employees.."));
+        // simulator may use analytics, but only its api
+        assertThat(failing)
+                .anyMatch(d -> d.contains("bad.simulator..") && d.contains("internal classes of module analytics"));
+        // employees may use compensation, but not classes in its root package
+        assertThat(failing)
+                .anyMatch(d -> d.contains("bad.employees..") && d.contains("internal classes of module compensation"));
+    }
+
+    @Test
+    void layerInversionsInsideAModuleAreFlagged() {
+        assertViolation(ArchitectureRules.applicationDoesNotDependOnWeb(BAD), bad);
+        assertNoViolation(ArchitectureRules.applicationDoesNotDependOnWeb(GOOD), good);
+        assertViolation(ArchitectureRules.persistenceDoesNotDependOnApplicationOrWeb(BAD), bad);
+        assertNoViolation(ArchitectureRules.persistenceDoesNotDependOnApplicationOrWeb(GOOD), good);
+        assertViolation(ArchitectureRules.apiDependsOnNoInternalLayer(BAD), bad);
+        assertNoViolation(ArchitectureRules.apiDependsOnNoInternalLayer(GOOD), good);
+    }
+
+    @Test
+    void unknownTopLevelPackagesAreReported() {
+        assertThat(ArchitectureRules.unknownTopLevelPackages(BAD, bad)).containsExactly("reports");
+        assertThat(ArchitectureRules.unknownTopLevelPackages(GOOD, good)).isEmpty();
     }
 
     @Test

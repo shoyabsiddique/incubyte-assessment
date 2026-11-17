@@ -32,8 +32,25 @@ class HealthEndpointIT extends AbstractMariaDbIntegrationTest {
     }
 
     @Test
-    void infoIsAvailableWithoutAuthentication() throws Exception {
-        assertThat(get("/actuator/info", null).statusCode()).isEqualTo(200);
+    void infoIsAvailableWithoutAuthenticationAndCarriesACorrelationId() throws Exception {
+        HttpResponse<String> response = get("/actuator/info", null);
+
+        assertThat(response.statusCode()).isEqualTo(200);
+        assertThat(response.headers().firstValue(HEADER)).isPresent();
+    }
+
+    @Test
+    void healthRevealsNoComponentDetailsToAnonymousCallers() throws Exception {
+        HttpResponse<String> response = get("/actuator/health", null);
+
+        assertThat(response.body()).doesNotContain("components").doesNotContain("details");
+    }
+
+    @Test
+    void actuatorEndpointsOtherThanHealthAndInfoAreNotExposed() throws Exception {
+        assertThat(get("/actuator/env", null).statusCode()).isEqualTo(404);
+        assertThat(get("/actuator/beans", null).statusCode()).isEqualTo(404);
+        assertThat(get("/actuator/metrics", null).statusCode()).isEqualTo(404);
     }
 
     @Test

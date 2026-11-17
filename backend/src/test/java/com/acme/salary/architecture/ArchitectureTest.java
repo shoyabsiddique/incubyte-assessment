@@ -24,6 +24,24 @@ class ArchitectureTest {
     }
 
     @Test
+    void theApplicationClassesWereActuallyImported() {
+        // Guards against a wrong BASE making every rule vacuously green.
+        assertThat(classes.contain(com.acme.salary.SalaryApplication.class)).isTrue();
+    }
+
+    @Test
+    void everyTopLevelPackageIsAKnownModuleOrTheSharedKernel() {
+        assertThat(ArchitectureRules.unknownTopLevelPackages(BASE, classes)).isEmpty();
+    }
+
+    @Test
+    void layersInsideAModulePointInwardsOnly() {
+        ArchitectureRules.applicationDoesNotDependOnWeb(BASE).check(classes);
+        ArchitectureRules.persistenceDoesNotDependOnApplicationOrWeb(BASE).check(classes);
+        ArchitectureRules.apiDependsOnNoInternalLayer(BASE).check(classes);
+    }
+
+    @Test
     void everyModuleHasEveryLayerPackage() {
         assertThat(ArchitectureRules.missingPackages(BASE, classes)).isEmpty();
     }

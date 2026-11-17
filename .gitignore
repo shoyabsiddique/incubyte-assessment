@@ -1,0 +1,8 @@
+# Local secrets and environment files: only the example is committed.
+.env
+.env.*
+!.env.example
+
+# Editors
+.idea/
+.vscode/
