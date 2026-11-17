@@ -151,10 +151,9 @@ describe('EmployeeFormComponent', () => {
       fillValidNewEmployee();
       await submit();
 
-      http.expectOne(`${API}/employees`).flush(
-        { code: 'DUPLICATE_EMPLOYEE_EMAIL' },
-        { status: 409, statusText: 'Conflict' },
-      );
+      http
+        .expectOne(`${API}/employees`)
+        .flush({ code: 'DUPLICATE_EMPLOYEE_EMAIL' }, { status: 409, statusText: 'Conflict' });
       await fixture.whenStable();
       fixture.detectChanges();
 
@@ -199,14 +198,15 @@ describe('EmployeeFormComponent', () => {
       type('jobTitle', 'Staff Engineer');
       await submit();
 
-      http.expectOne(`${API}/employees/e1`).flush(
-        { code: 'CONCURRENT_MODIFICATION' },
-        { status: 409, statusText: 'Conflict' },
-      );
+      http
+        .expectOne(`${API}/employees/e1`)
+        .flush({ code: 'CONCURRENT_MODIFICATION' }, { status: 409, statusText: 'Conflict' });
       await fixture.whenStable();
       fixture.detectChanges();
 
-      expect(view.querySelector('[role="alert"]')?.textContent).toContain('changed by someone else');
+      expect(view.querySelector('[role="alert"]')?.textContent).toContain(
+        'changed by someone else',
+      );
       expect(input('jobTitle').value).toBe('Staff Engineer');
       (view.querySelector('button.reload') as HTMLButtonElement).click();
       expect(reloads).toBe(1);

@@ -1,0 +1,125 @@
+@if (!employeeId()) {
+  <section class="filters" aria-label="Audit filters">
+    <mat-form-field appearance="outline">
+      <mat-label>Changed by</mat-label>
+      <mat-select [value]="filters().userId" (selectionChange)="setFilter('userId', $event.value)">
+        <mat-option value="">Everyone</mat-option>
+        @for (user of knownUsers(); track user.id) {
+          <mat-option [value]="user.id">{{ user.email }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>What changed</mat-label>
+      <mat-select
+        [value]="filters().entityType"
+        (selectionChange)="setFilter('entityType', $event.value)"
+      >
+        <mat-option value="">Everything</mat-option>
+        @for (type of entityTypes; track type.value) {
+          <mat-option [value]="type.value">{{ type.label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>From</mat-label>
+      <input
+        matInput
+        class="from"
+        type="date"
+        [value]="filters().from"
+        (change)="setFilter('from', $any($event.target).value)"
+      />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>To</mat-label>
+      <input
+        matInput
+        class="to"
+        type="date"
+        [value]="filters().to"
+        (change)="setFilter('to', $any($event.target).value)"
+      />
+    </mat-form-field>
+
+    <button mat-button type="button" class="clear" (click)="clearFilters()">Clear filters</button>
+  </section>
+}
+
+@if (state() === 'loading') {
+  <mat-progress-bar mode="indeterminate" aria-label="Loading the audit history"></mat-progress-bar>
+}
+
+@if (state() === 'error') {
+  <section class="message" role="alert">
+    <p>The audit history could not be loaded.</p>
+    <button class="retry" mat-flat-button type="button" (click)="retry()">Try again</button>
+  </section>
+}
+
+@if (state() === 'ready' && entries().length === 0) {
+  <p class="message">
+    No changes have been recorded{{ employeeId() ? ' for this employee' : '' }} yet.
+  </p>
+}
+
+@if (state() === 'ready' && entries().length > 0) {
+  <div class="table-scroll">
+    <table mat-table [dataSource]="entries()" aria-label="Audit history">
+      <ng-container matColumnDef="when">
+        <th mat-header-cell *matHeaderCellDef>When</th>
+        <td mat-cell *matCellDef="let entry">{{ entry.createdAt | date: 'medium' }}</td>
+      </ng-container>
+      <ng-container matColumnDef="user">
+        <th mat-header-cell *matHeaderCellDef>Changed by</th>
+        <td mat-cell *matCellDef="let entry">{{ entry.userEmail }}</td>
+      </ng-container>
+      <ng-container matColumnDef="action">
+        <th mat-header-cell *matHeaderCellDef>Action</th>
+        <td mat-cell *matCellDef="let entry">{{ actionLabel(entry.operation) }}</td>
+      </ng-container>
+      <ng-container matColumnDef="what">
+        <th mat-header-cell *matHeaderCellDef>What</th>
+        <td mat-cell *matCellDef="let entry">{{ entityLabel(entry.entityType) }}</td>
+      </ng-container>
+      <ng-container matColumnDef="employee">
+        <th mat-header-cell *matHeaderCellDef>Employee</th>
+        <td mat-cell *matCellDef="let entry">
+          @if (entry.subjectEmployeeId) {
+            <a [routerLink]="['/employees', entry.subjectEmployeeId]">View employee</a>
+          } @else {
+            —
+          }
+        </td>
+      </ng-container>
+      <ng-container matColumnDef="changes">
+        <th mat-header-cell *matHeaderCellDef>Changes</th>
+        <td mat-cell *matCellDef="let entry">
+          @for (change of changes(entry); track change.field) {
+            <div class="change">
+              <strong>{{ change.field }}</strong>:
+              @if (entry.before) {
+                {{ change.before ?? '—' }} →
+              }
+              {{ change.after ?? '—' }}
+            </div>
+          }
+        </td>
+      </ng-container>
+      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <tr mat-row *matRowDef="let row; columns: columns"></tr>
+    </table>
+  </div>
+
+  <mat-paginator
+    [length]="total()"
+    [pageIndex]="filters().page"
+    [pageSize]="filters().size"
+    [pageSizeOptions]="[10, 20, 50]"
+    (page)="onPage($event)"
+    aria-label="Choose a page of audit entries"
+  ></mat-paginator>
+}

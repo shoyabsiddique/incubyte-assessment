@@ -348,5 +348,4 @@ describe('EmployeesPage', () => {
       expect(link.textContent).toContain('Add employee');
     });
   });
-
 });

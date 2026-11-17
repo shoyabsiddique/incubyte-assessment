@@ -24,6 +24,7 @@ export interface EmployeeSummary {
   hireDate: string;
   salary: Money | null;
   salaryUsd: Money | null;
+  version: number;
 }
 
 export interface SalaryRecord {
@@ -33,6 +34,25 @@ export interface SalaryRecord {
   effectiveStart: string;
   effectiveEnd: string | null;
   current: boolean;
+}
+
+export interface EmployeeProfileInput {
+  firstName: string;
+  lastName: string;
+  workEmail: string;
+  jobTitle: string;
+  department: string;
+  country: string;
+  city: string;
+  employmentType: string;
+  hireDate: string;
+  status: string;
+}
+
+export interface NewEmployeeInput extends EmployeeProfileInput {
+  salaryAmount: string;
+  salaryCurrency: string;
+  salaryEffectiveStart: string;
 }
 
 export interface EmployeePage {
@@ -100,6 +120,17 @@ export class EmployeeService {
     return this.http.get<SalaryRecord[]>(
       `${this.config.apiBaseUrl}/employees/${id}/salary-history`,
     );
+  }
+
+  create(input: NewEmployeeInput): Observable<EmployeeSummary> {
+    return this.http.post<EmployeeSummary>(`${this.config.apiBaseUrl}/employees`, input);
+  }
+
+  update(id: string, input: EmployeeProfileInput, version: number): Observable<EmployeeSummary> {
+    return this.http.put<EmployeeSummary>(`${this.config.apiBaseUrl}/employees/${id}`, {
+      ...input,
+      version,
+    });
   }
 
   filters(): Observable<FilterOptions> {

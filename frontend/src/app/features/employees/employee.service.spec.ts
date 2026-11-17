@@ -118,5 +118,4 @@ describe('EmployeeService', () => {
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({ firstName: 'Ada', version: 7 });
   });
-
 });

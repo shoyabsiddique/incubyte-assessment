@@ -21,110 +21,137 @@
   }
   @case ('ready') {
     @if (employee(); as person) {
-      <h2>{{ person.firstName }} {{ person.lastName }}</h2>
-
-      <section class="profile" aria-label="Profile">
-        <dl>
-          <div>
-            <dt>Employee ID</dt>
-            <dd>{{ person.employeeId }}</dd>
-          </div>
-          <div>
-            <dt>Work email</dt>
-            <dd>{{ person.workEmail }}</dd>
-          </div>
-          <div>
-            <dt>Job title</dt>
-            <dd>{{ person.jobTitle }}</dd>
-          </div>
-          <div>
-            <dt>Department</dt>
-            <dd>{{ person.department }}</dd>
-          </div>
-          <div>
-            <dt>Country</dt>
-            <dd>{{ person.countryName }}</dd>
-          </div>
-          <div>
-            <dt>City</dt>
-            <dd>{{ person.city }}</dd>
-          </div>
-          <div>
-            <dt>Employment type</dt>
-            <dd>{{ label(person.employmentType) }}</dd>
-          </div>
-          <div>
-            <dt>Status</dt>
-            <dd>{{ label(person.status) }}</dd>
-          </div>
-          <div>
-            <dt>Hired</dt>
-            <dd>{{ person.hireDate | date: 'mediumDate' }}</dd>
-          </div>
-        </dl>
-      </section>
-
-      <section class="current-salary" aria-label="Current salary">
-        <h3>Current salary</h3>
-        @if (person.salary && person.salaryUsd) {
-          <p class="local">
-            {{ person.salary.amount | number: '1.2-2' }} {{ person.salary.currency }}
-          </p>
-          <p class="usd">
-            {{ person.salaryUsd.amount | number: '1.2-2' }} {{ person.salaryUsd.currency }}
-          </p>
-        } @else {
-          <p>—</p>
+      <div class="heading">
+        <h2>{{ person.firstName }} {{ person.lastName }}</h2>
+        @if (!editing()) {
+          <button mat-stroked-button class="edit" type="button" (click)="editing.set(true)">
+            Edit profile
+          </button>
         }
-      </section>
+      </div>
 
-      <section aria-label="Salary history">
-        <h3>Salary history</h3>
-        <p class="note">USD figures use current exchange rates.</p>
-        @if (history().length === 0) {
-          <p>No salary has been recorded for this employee.</p>
-        } @else {
-          <div class="table-scroll">
-            <table mat-table class="history" [dataSource]="history()">
-              <ng-container matColumnDef="period">
-                <th mat-header-cell *matHeaderCellDef>Period</th>
-                <td mat-cell *matCellDef="let record">
-                  {{ record.effectiveStart | date: 'mediumDate' }} –
-                  @if (record.effectiveEnd) {
-                    {{ record.effectiveEnd | date: 'mediumDate' }}
-                  } @else {
-                    Present
-                  }
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="amount">
-                <th mat-header-cell *matHeaderCellDef>Salary</th>
-                <td mat-cell *matCellDef="let record">
-                  {{ record.amount.amount | number: '1.2-2' }} {{ record.amount.currency }}
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="amountUsd">
-                <th mat-header-cell *matHeaderCellDef>Salary in USD</th>
-                <td mat-cell *matCellDef="let record">
-                  {{ record.amountUsd.amount | number: '1.2-2' }} {{ record.amountUsd.currency }}
-                </td>
-              </ng-container>
-              <ng-container matColumnDef="marker">
-                <th mat-header-cell *matHeaderCellDef>
-                  <span class="visually-hidden">Status</span>
-                </th>
-                <td mat-cell *matCellDef="let record">
-                  @if (record.current) {
-                    <span class="badge">Current</span>
-                  }
-                </td>
-              </ng-container>
-              <tr mat-header-row *matHeaderRowDef="columns"></tr>
-              <tr mat-row *matRowDef="let row; columns: columns"></tr>
-            </table>
-          </div>
-        }
-      </section>
+      <mat-tab-group>
+        <mat-tab label="Details">
+          @if (editing()) {
+            <app-employee-form
+              mode="edit"
+              [employee]="person"
+              (saved)="onSaved($event)"
+              (cancelled)="editing.set(false)"
+              (reload)="reloadLatest()"
+            />
+          } @else {
+            <section class="profile" aria-label="Profile">
+              <dl>
+                <div>
+                  <dt>Employee ID</dt>
+                  <dd>{{ person.employeeId }}</dd>
+                </div>
+                <div>
+                  <dt>Work email</dt>
+                  <dd>{{ person.workEmail }}</dd>
+                </div>
+                <div>
+                  <dt>Job title</dt>
+                  <dd>{{ person.jobTitle }}</dd>
+                </div>
+                <div>
+                  <dt>Department</dt>
+                  <dd>{{ person.department }}</dd>
+                </div>
+                <div>
+                  <dt>Country</dt>
+                  <dd>{{ person.countryName }}</dd>
+                </div>
+                <div>
+                  <dt>City</dt>
+                  <dd>{{ person.city }}</dd>
+                </div>
+                <div>
+                  <dt>Employment type</dt>
+                  <dd>{{ label(person.employmentType) }}</dd>
+                </div>
+                <div>
+                  <dt>Status</dt>
+                  <dd>{{ label(person.status) }}</dd>
+                </div>
+                <div>
+                  <dt>Hired</dt>
+                  <dd>{{ person.hireDate | date: 'mediumDate' }}</dd>
+                </div>
+              </dl>
+            </section>
+          }
+
+          <section class="current-salary" aria-label="Current salary">
+            <h3>Current salary</h3>
+            @if (person.salary && person.salaryUsd) {
+              <p class="local">
+                {{ person.salary.amount | number: '1.2-2' }} {{ person.salary.currency }}
+              </p>
+              <p class="usd">
+                {{ person.salaryUsd.amount | number: '1.2-2' }} {{ person.salaryUsd.currency }}
+              </p>
+            } @else {
+              <p>—</p>
+            }
+          </section>
+
+          <section aria-label="Salary history">
+            <h3>Salary history</h3>
+            <p class="note">USD figures use current exchange rates.</p>
+            @if (history().length === 0) {
+              <p>No salary has been recorded for this employee.</p>
+            } @else {
+              <div class="table-scroll">
+                <table mat-table class="history" [dataSource]="history()">
+                  <ng-container matColumnDef="period">
+                    <th mat-header-cell *matHeaderCellDef>Period</th>
+                    <td mat-cell *matCellDef="let record">
+                      {{ record.effectiveStart | date: 'mediumDate' }} –
+                      @if (record.effectiveEnd) {
+                        {{ record.effectiveEnd | date: 'mediumDate' }}
+                      } @else {
+                        Present
+                      }
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="amount">
+                    <th mat-header-cell *matHeaderCellDef>Salary</th>
+                    <td mat-cell *matCellDef="let record">
+                      {{ record.amount.amount | number: '1.2-2' }} {{ record.amount.currency }}
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="amountUsd">
+                    <th mat-header-cell *matHeaderCellDef>Salary in USD</th>
+                    <td mat-cell *matCellDef="let record">
+                      {{ record.amountUsd.amount | number: '1.2-2' }}
+                      {{ record.amountUsd.currency }}
+                    </td>
+                  </ng-container>
+                  <ng-container matColumnDef="marker">
+                    <th mat-header-cell *matHeaderCellDef>
+                      <span class="visually-hidden">Status</span>
+                    </th>
+                    <td mat-cell *matCellDef="let record">
+                      @if (record.current) {
+                        <span class="badge">Current</span>
+                      }
+                    </td>
+                  </ng-container>
+                  <tr mat-header-row *matHeaderRowDef="columns"></tr>
+                  <tr mat-row *matRowDef="let row; columns: columns"></tr>
+                </table>
+              </div>
+            }
+          </section>
+        </mat-tab>
+        <mat-tab label="Audit history">
+          <ng-template matTabContent>
+            <app-audit-history [employeeId]="person.id" />
+          </ng-template>
+        </mat-tab>
+      </mat-tab-group>
     }
   }
 }

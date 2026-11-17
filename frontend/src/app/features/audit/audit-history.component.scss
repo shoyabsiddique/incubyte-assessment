@@ -1,0 +1,30 @@
+:host {
+  display: block;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: baseline;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
+
+td.mat-column-changes {
+  min-width: 260px;
+}
+
+.change {
+  margin: 2px 0;
+}
+
+.message {
+  padding: 12px 0;
+}

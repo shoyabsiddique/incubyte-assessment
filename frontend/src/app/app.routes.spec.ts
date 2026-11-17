@@ -157,5 +157,4 @@ describe('app routes', () => {
       expect(document.title).toBe('Add employee | ACME Salary Management');
     });
   });
-
 });

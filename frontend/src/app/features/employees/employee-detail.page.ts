@@ -6,6 +6,9 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
+import { AuditHistoryComponent } from '../audit/audit-history.component';
+import { EmployeeFormComponent } from './employee-form.component';
 import { BehaviorSubject, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { EmployeeService, EmployeeSummary, SalaryRecord } from './employee.service';
 
@@ -22,6 +25,9 @@ type Outcome = Loaded | 'not-found' | 'error';
     MatButtonModule,
     MatProgressBarModule,
     MatTableModule,
+    MatTabsModule,
+    AuditHistoryComponent,
+    EmployeeFormComponent,
   ],
   templateUrl: './employee-detail.page.html',
   styleUrl: './employee-detail.page.scss',
@@ -37,6 +43,7 @@ export class EmployeeDetailPage {
   protected readonly state = signal<'loading' | 'ready' | 'not-found' | 'error'>('loading');
   protected readonly employee = signal<EmployeeSummary | null>(null);
   protected readonly history = signal<SalaryRecord[]>([]);
+  protected readonly editing = signal(false);
 
   constructor() {
     this.requests
@@ -93,6 +100,16 @@ export class EmployeeDetailPage {
   protected label(value: string): string {
     const words = value.replace(/_/g, ' ').toLowerCase();
     return words.charAt(0).toUpperCase() + words.slice(1);
+  }
+
+  protected onSaved(updated: EmployeeSummary): void {
+    this.employee.set(updated);
+    this.editing.set(false);
+  }
+
+  protected reloadLatest(): void {
+    this.editing.set(false);
+    this.retry();
   }
 
   protected retry(): void {

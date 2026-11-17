@@ -10,6 +10,13 @@
 }
 
 /* Only the table scrolls sideways on narrow screens; the search and filters stay in view. */
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .table-scroll {
   overflow-x: auto;
 }

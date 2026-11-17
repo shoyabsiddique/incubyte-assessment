@@ -1,0 +1,140 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate class="employee-form">
+  @if (conflict()) {
+    <div class="banner" role="alert">
+      <p>This employee was changed by someone else while you were editing.</p>
+      <button mat-stroked-button type="button" class="reload" (click)="reload.emit()">
+        Reload the latest data
+      </button>
+    </div>
+  }
+  @if (generalError()) {
+    <p class="banner" role="alert">{{ generalError() }}</p>
+  }
+
+  <div class="grid">
+    <mat-form-field appearance="outline">
+      <mat-label>First name</mat-label>
+      <input matInput formControlName="firstName" autocomplete="off" />
+      <mat-error>{{
+        form.controls.firstName.errors?.['server'] ?? 'First name is required'
+      }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Last name</mat-label>
+      <input matInput formControlName="lastName" autocomplete="off" />
+      <mat-error>{{
+        form.controls.lastName.errors?.['server'] ?? 'Last name is required'
+      }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Work email</mat-label>
+      <input matInput type="email" formControlName="workEmail" autocomplete="off" />
+      <mat-error>
+        {{
+          form.controls.workEmail.errors?.['server'] ??
+            (form.controls.workEmail.hasError('email')
+              ? 'Enter a valid email address'
+              : 'Work email is required')
+        }}
+      </mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Job title</mat-label>
+      <input matInput formControlName="jobTitle" autocomplete="off" />
+      <mat-error>{{
+        form.controls.jobTitle.errors?.['server'] ?? 'Job title is required'
+      }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Department</mat-label>
+      <input matInput formControlName="department" autocomplete="off" />
+      <mat-error>{{
+        form.controls.department.errors?.['server'] ?? 'Department is required'
+      }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>City</mat-label>
+      <input matInput formControlName="city" autocomplete="off" />
+      <mat-error>{{ form.controls.city.errors?.['server'] ?? 'City is required' }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Country</mat-label>
+      <mat-select formControlName="country" (selectionChange)="setCountry($event.value)">
+        @for (country of countries; track country.code) {
+          <mat-option [value]="country.code">{{ country.name }}</mat-option>
+        }
+      </mat-select>
+      <mat-error>{{ form.controls.country.errors?.['server'] ?? 'Country is required' }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Employment type</mat-label>
+      <mat-select formControlName="employmentType">
+        @for (type of employmentTypes; track type.value) {
+          <mat-option [value]="type.value">{{ type.label }}</mat-option>
+        }
+      </mat-select>
+      <mat-error>{{
+        form.controls.employmentType.errors?.['server'] ?? 'Employment type is required'
+      }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Status</mat-label>
+      <mat-select formControlName="status">
+        @for (status of statuses; track status.value) {
+          <mat-option [value]="status.value">{{ status.label }}</mat-option>
+        }
+      </mat-select>
+      <mat-error>{{ form.controls.status.errors?.['server'] ?? 'Status is required' }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Hire date</mat-label>
+      <input matInput type="date" formControlName="hireDate" />
+      <mat-error>{{
+        form.controls.hireDate.errors?.['server'] ?? 'Hire date is required'
+      }}</mat-error>
+    </mat-form-field>
+
+    @if (mode() === 'create') {
+      <mat-form-field appearance="outline">
+        <mat-label>Annual gross base salary</mat-label>
+        <input matInput inputmode="decimal" formControlName="salaryAmount" autocomplete="off" />
+        <mat-hint>
+          @if (currency()) {
+            Paid in <span class="currency">{{ currency() }}</span> for the chosen country
+          } @else {
+            Choose a country to see the salary currency
+          }
+        </mat-hint>
+        <mat-error>{{
+          form.controls.salaryAmount.errors?.['server'] ?? 'Salary is required'
+        }}</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Salary start date</mat-label>
+        <input matInput type="date" formControlName="salaryEffectiveStart" />
+        <mat-error>
+          {{
+            form.controls.salaryEffectiveStart.errors?.['server'] ?? 'Salary start date is required'
+          }}
+        </mat-error>
+      </mat-form-field>
+    }
+  </div>
+
+  <div class="actions">
+    <button mat-flat-button type="submit" [disabled]="busy()">
+      {{ mode() === 'create' ? 'Add employee' : 'Save changes' }}
+    </button>
+    <button mat-button type="button" class="cancel" (click)="cancelled.emit()">Cancel</button>
+  </div>
+</form>

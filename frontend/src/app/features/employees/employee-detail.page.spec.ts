@@ -283,5 +283,4 @@ describe('EmployeeDetailPage', () => {
     );
     expect(labels).toEqual(['Details', 'Audit history']);
   });
-
 });

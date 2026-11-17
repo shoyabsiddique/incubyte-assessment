@@ -17,6 +17,13 @@ export const routes: Routes = [
     loadComponent: () => import('./features/employees/employees.page').then((m) => m.EmployeesPage),
   },
   {
+    path: 'employees/new',
+    canActivate: [authGuard],
+    title: `Add employee | ${APP_NAME}`,
+    loadComponent: () =>
+      import('./features/employees/new-employee.page').then((m) => m.NewEmployeePage),
+  },
+  {
     path: 'employees/:id',
     canActivate: [authGuard],
     title: `Employee | ${APP_NAME}`,
