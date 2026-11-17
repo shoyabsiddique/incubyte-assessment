@@ -30,7 +30,7 @@ public class DemoAccountSeeder implements ApplicationRunner {
     private final String password;
 
     public DemoAccountSeeder(
-            AppUserRepository users, PasswordEncoder encoder, @Value("${app.seed.hr-password}") String password) {
+            AppUserRepository users, PasswordEncoder encoder, @Value("${DEMO_HR_PASSWORD:${app.seed.hr-password:}}") String password) {
         if (password == null || password.isBlank()) {
             throw new IllegalStateException("DEMO_HR_PASSWORD must be set to create the demo accounts");
         }

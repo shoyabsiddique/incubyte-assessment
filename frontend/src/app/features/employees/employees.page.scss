@@ -9,6 +9,11 @@
   min-width: 320px;
 }
 
+/* Only the table scrolls sideways on narrow screens; the search and filters stay in view. */
+.table-scroll {
+  overflow-x: auto;
+}
+
 table {
   width: 100%;
 }
