@@ -15,6 +15,19 @@
   font-weight: 500;
 }
 
+.spacer {
+  flex: 1;
+}
+
+.user {
+  margin-right: 8px;
+  font-size: 0.875rem;
+}
+
+.sign-out {
+  --mat-button-text-label-text-color: var(--mat-sys-on-primary);
+}
+
 .layout {
   flex: 1;
 }

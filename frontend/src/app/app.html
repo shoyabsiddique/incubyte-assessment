@@ -1,26 +1,33 @@
 <mat-toolbar class="toolbar">
   <h1 class="app-title">{{ title }}</h1>
+  <span class="spacer"></span>
+  @if (auth.user(); as user) {
+    <span class="user">{{ user.email }}</span>
+    <button class="sign-out" mat-button type="button" (click)="signOut()">Sign out</button>
+  }
 </mat-toolbar>
 
 <mat-sidenav-container class="layout">
-  <mat-sidenav mode="side" opened class="sidenav">
-    <nav aria-label="Main navigation">
-      <mat-nav-list>
-        @for (item of navItems; track item.path) {
-          <a
-            mat-list-item
-            [routerLink]="item.path"
-            routerLinkActive
-            ariaCurrentWhenActive="page"
-            #link="routerLinkActive"
-            [activated]="link.isActive"
-          >
-            {{ item.label }}
-          </a>
-        }
-      </mat-nav-list>
-    </nav>
-  </mat-sidenav>
+  @if (auth.isAuthenticated()) {
+    <mat-sidenav mode="side" opened class="sidenav">
+      <nav aria-label="Main navigation">
+        <mat-nav-list>
+          @for (item of navItems; track item.path) {
+            <a
+              mat-list-item
+              [routerLink]="item.path"
+              routerLinkActive
+              ariaCurrentWhenActive="page"
+              #link="routerLinkActive"
+              [activated]="link.isActive"
+            >
+              {{ item.label }}
+            </a>
+          }
+        </mat-nav-list>
+      </nav>
+    </mat-sidenav>
+  }
 
   <mat-sidenav-content class="content">
     <router-outlet />
