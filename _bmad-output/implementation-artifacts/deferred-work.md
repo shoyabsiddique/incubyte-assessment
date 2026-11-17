@@ -31,3 +31,12 @@
 - source_spec: `_bmad-output/implementation-artifacts/spec-1-4-sign-in-and-sign-out.md`
   summary: Ensure deployments never ship `config.json` pointing at localhost and serve it with short cache lifetime.
   evidence: The shipped `public/config.json` defaults to http://localhost:8080/api/v1, so a missed override sends production traffic to localhost (Story 7.2).
+
+## From Story 1.7
+- "Today" for the current-salary flag is the UTC date; decide whether it should follow the employee's country.
+- Per-row currency or missing-rate failures fail the whole history response; degrade per row if more currencies are added.
+- A future-dated open salary record is labelled "Present"; label it "Scheduled" once raises exist (Epic 3).
+- The detail page makes two requests with separate rate snapshots; a combined endpoint would remove any skew.
+- Format amounts by the currency's own decimals (zero-decimal currencies) and carry the employee name in the tab title.
+- Trim the id route parameter; make integration test data independent of the shared container and the fixed seed.
+

@@ -15,12 +15,13 @@ test('an HR Manager signs in, finds an employee, reads their pay and signs out',
 
   await page.getByRole('link', { name: 'Employees' }).click();
   await page.getByLabel('Search by name, email or Employee ID').fill('EMP-000001');
-  await page.getByRole('link', { name: /Charlotte Smith|EMP-000001/ }).first().click();
+  await page.getByRole('row').filter({ hasText: 'EMP-000001' }).getByRole('link').click();
 
   await expect(page.getByRole('heading', { level: 2, name: 'Charlotte Smith' })).toBeVisible();
   const current = page.locator('.current-salary');
-  await expect(current).toContainText('AUD');
-  await expect(current).toContainText('USD');
+  await expect(current.locator('.local')).toHaveText(/^\d{1,3}(,\d{3})*\.\d{2} AUD$/);
+  await expect(current.locator('.usd')).toHaveText(/^\d{1,3}(,\d{3})*\.\d{2} USD$/);
+  await expect(page.getByText('EMP-000001').first()).toBeVisible();
   await expect(page.locator('table.history tr[mat-row]').first()).toContainText('Present');
   await expect(page.locator('table.history')).toContainText('Current');
 

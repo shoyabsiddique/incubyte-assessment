@@ -53,9 +53,7 @@ export class EmployeeDetailPage {
               .salaryHistory(id)
               .pipe(
                 catchError((error: unknown) =>
-                  error instanceof HttpErrorResponse && error.status === 404
-                    ? of<SalaryRecord[]>([])
-                    : throwFailure(error),
+                  isNoHistory(error) ? of<SalaryRecord[]>([]) : throwFailure(),
                 ),
               ),
           }).pipe(
@@ -102,6 +100,16 @@ export class EmployeeDetailPage {
   }
 }
 
-function throwFailure(error: unknown): never {
-  throw error;
+/** Only the API's own "no salary records" answer is an empty history; any other 404 is a fault. */
+function isNoHistory(error: unknown): boolean {
+  return (
+    error instanceof HttpErrorResponse &&
+    error.status === 404 &&
+    (error.error as { code?: string } | null)?.code === 'SALARY_HISTORY_NOT_FOUND'
+  );
+}
+
+/** A failed history is a fault of its own, so it must not be mistaken for a missing employee (also a 404). */
+function throwFailure(): never {
+  throw new Error('The salary history could not be loaded');
 }

@@ -197,4 +197,46 @@ describe('EmployeeDetailPage', () => {
     expect(http.expectOne(`${API}/employees/${ID}`)).toBeTruthy();
     http.match(`${API}/employees/${ID}/salary-history`);
   });
+
+  it('shows an empty history when the employee has no salary records', async () => {
+    http.expectOne(`${API}/employees/${ID}`).flush({ ...EMPLOYEE, salary: null, salaryUsd: null });
+    http
+      .expectOne(`${API}/employees/${ID}/salary-history`)
+      .flush({ code: 'SALARY_HISTORY_NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+    await settle();
+
+    expect(page.textContent).toContain('No salary has been recorded');
+    expect(page.querySelector('[role="alert"]')).toBeNull();
+  });
+
+  it('treats a 404 that is not the missing-history answer as an error', async () => {
+    http.expectOne(`${API}/employees/${ID}`).flush(EMPLOYEE);
+    http
+      .expectOne(`${API}/employees/${ID}/salary-history`)
+      .flush('<html>nope</html>', { status: 404, statusText: 'Not Found' });
+    await settle();
+
+    expect(page.querySelector('[role="alert"]')?.textContent).toContain('could not be loaded');
+    expect(page.textContent).not.toContain('No salary has been recorded');
+  });
+
+  it('shows the error state when the history cannot be loaded', async () => {
+    http.expectOne(`${API}/employees/${ID}`).flush(EMPLOYEE);
+    http
+      .expectOne(`${API}/employees/${ID}/salary-history`)
+      .flush({}, { status: 500, statusText: 'Server Error' });
+    await settle();
+
+    expect(page.querySelector('[role="alert"]')?.textContent).toContain('could not be loaded');
+  });
+
+  it('announces the not-found answer to assistive technology', async () => {
+    http
+      .expectOne(`${API}/employees/${ID}`)
+      .flush({ code: 'EMPLOYEE_NOT_FOUND' }, { status: 404, statusText: 'Not Found' });
+    http.match(`${API}/employees/${ID}/salary-history`);
+    await settle();
+
+    expect(page.querySelector('section.message')?.getAttribute('role')).toBe('status');
+  });
 });

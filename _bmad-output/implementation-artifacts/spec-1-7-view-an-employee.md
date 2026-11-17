@@ -2,9 +2,9 @@
 title: 'Story 1.7: View an employee'
 type: 'feature'
 created: '2026-11-18'
-status: 'in-progress'
+status: 'done'
 route: 'dispatch'
-review_loop_iteration: 0
+review_loop_iteration: 1
 baseline_commit: '048c1f5be4d4ad99ff4f7a426fd26b76f75cda4e'
 context:
   - '{project-root}/_bmad-output/implementation-artifacts/epic-1-context.md'
@@ -60,3 +60,24 @@ context:
 - Given ArchUnit and all suites, then everything passes.
 
 ## Implementation Notes
+
+Delivered: `GET /employees/{id}`, `GET /employees/{id}/salary-history`, `SalaryPeriod`, `MoneyResponse` moved to `shared.web` (one response shape for both modules), the detail page and route, the Playwright smoke test and the CI `e2e` job. The smoke test passed against the real stack locally (MariaDB container on 13306, seeded API, `ng serve`).
+
+## Review triage (three independent reviewers: blind code, edge cases, acceptance audit)
+
+**Patched**
+- The page treated any 404 from the history call as "no history", hiding routing faults; now only `SALARY_HISTORY_NOT_FOUND` is an empty history, and any other history failure is the error state (not "employee not found"). Tests added for each.
+- The not-found message is announced to assistive technology (`role="status"`).
+- CI e2e waited only for `/actuator/health`, which is UP before the seed runs; it now waits until sign-in works and 10,000 employees exist.
+- The smoke test now clicks the row whose Employee ID is EMP-000001 (names repeat in the seed) and asserts formatted AUD and USD amounts, not just currency codes.
+- `current` via the injected `Clock` had no controlled-clock test; `SalaryHistoryServiceTest` covers the covering record, nothing covering today, overlapping periods, one rate snapshot, and no records.
+
+**Deferred** (recorded in `deferred-work.md`)
+- "Today" is the UTC date (AD-4); a per-country business day is a product decision.
+- Any signed-in user may read pay: the PRD has one role, HR Manager.
+- Per-row currency or missing-rate failures take down the whole response; not reachable with seeded currencies.
+- A future-dated open record reads "Present"; scheduled raises arrive with Epic 3.
+- The profile and history are separate requests with their own rate snapshots.
+- Amounts use the `number` pipe (two decimals), which is wrong for zero-decimal currencies.
+- Integration test isolation depends on the shared container and the fixed seed.
+- The tab title does not include the employee's name; the id in the URL is not trimmed.
