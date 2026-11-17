@@ -68,6 +68,12 @@ class ArchitectureTest {
     }
 
     @Test
+    void seedUsesOnlySharedAndModuleApisAndNoModuleDependsOnIt() {
+        ArchitectureRules.seedUsesOnlySharedAndModuleApis(BASE).check(classes);
+        ArchitectureRules.noModuleDependsOnSeed(BASE).check(classes);
+    }
+
+    @Test
     void sharedKernelDependsOnNoModule() {
         ArchitectureRules.sharedDependsOnNoModule(BASE).check(classes);
     }

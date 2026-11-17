@@ -24,6 +24,9 @@ final class ArchitectureRules {
     static final List<String> LAYERS = List.of("api", "web", "application", "domain", "persistence");
     static final String SHARED = "shared";
 
+    /** Bootstrap code (the demo-data seed): outside the modules, allowed to use shared and module apis. */
+    static final String SEED = "seed";
+
     /** Which modules a module may use (through their api package only). Shared is open to all. */
     static final Map<String, Set<String>> ALLOWED_DEPENDENCIES = Map.of(
             "employees", Set.of("compensation", "audit"),
@@ -157,11 +160,42 @@ final class ArchitectureRules {
                 continue;
             }
             String top = pkg.substring(prefix.length()).split("\\.")[0];
-            if (!MODULES.contains(top) && !SHARED.equals(top)) {
+            if (!MODULES.contains(top) && !SHARED.equals(top) && !SEED.equals(top)) {
                 unknown.add(top);
             }
         }
         return unknown;
+    }
+
+    /** The seed may write data, but only through shared types and the published api of each module. */
+    static ArchRule seedUsesOnlySharedAndModuleApis(String base) {
+        DescribedPredicate<JavaClass> moduleInternals = MODULES.stream()
+                .map(module -> internalTo(base, module))
+                .reduce((left, right) -> left.or(right))
+                .orElseThrow()
+                .as("internal classes of any module");
+        return noClasses()
+                .that()
+                .resideInAPackage(base + "." + SEED + "..")
+                .should()
+                .dependOnClassesThat(moduleInternals)
+                .allowEmptyShould(true);
+    }
+
+    /** Nothing in the application may rely on the seed. */
+    static ArchRule noModuleDependsOnSeed(String base) {
+        String[] callers = new String[MODULES.size() + 1];
+        for (int i = 0; i < MODULES.size(); i++) {
+            callers[i] = base + "." + MODULES.get(i) + "..";
+        }
+        callers[MODULES.size()] = base + "." + SHARED + "..";
+        return noClasses()
+                .that()
+                .resideInAnyPackage(callers)
+                .should()
+                .dependOnClassesThat()
+                .resideInAPackage(base + "." + SEED + "..")
+                .allowEmptyShould(true);
     }
 
     static ArchRule modulesAreFreeOfCycles(String base) {

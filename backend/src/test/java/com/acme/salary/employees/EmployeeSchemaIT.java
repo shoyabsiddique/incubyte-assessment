@@ -39,6 +39,14 @@ class EmployeeSchemaIT extends AbstractMariaDbIntegrationTest {
                 UUID.randomUUID().toString(), employeeId, amount, currency, start, end);
     }
 
+    @Autowired
+    private org.springframework.core.env.Environment environment;
+
+    @Test
+    void datesAreHandledInUtc() {
+        assertThat(environment.getProperty("spring.jpa.properties.hibernate.jdbc.time_zone")).isEqualTo("UTC");
+    }
+
     @Test
     void storesAValidEmployeeWithItsVersionStartingAtZero() {
         String id = insertEmployee("EMP-900001", "asha.rao@acme.example", "ACTIVE");

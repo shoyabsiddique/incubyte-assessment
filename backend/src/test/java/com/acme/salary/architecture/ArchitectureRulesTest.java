@@ -89,6 +89,14 @@ class ArchitectureRulesTest {
     }
 
     @Test
+    void theSeedPackageMayUseOnlySharedAndModuleApisAndNobodyMayUseIt() {
+        assertViolation(ArchitectureRules.seedUsesOnlySharedAndModuleApis(BAD), bad);
+        assertNoViolation(ArchitectureRules.seedUsesOnlySharedAndModuleApis(GOOD), good);
+        assertViolation(ArchitectureRules.noModuleDependsOnSeed(BAD), bad);
+        assertNoViolation(ArchitectureRules.noModuleDependsOnSeed(GOOD), good);
+    }
+
+    @Test
     void unknownTopLevelPackagesAreReported() {
         assertThat(ArchitectureRules.unknownTopLevelPackages(BAD, bad)).containsExactly("reports");
         assertThat(ArchitectureRules.unknownTopLevelPackages(GOOD, good)).isEmpty();
