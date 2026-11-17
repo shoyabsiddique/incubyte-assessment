@@ -2,7 +2,7 @@
 title: 'Story 1.4: Sign in and sign out'
 type: 'feature'
 created: '2026-11-18'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: '13f26db98f3249a5381737d9e338f876691d3374'
