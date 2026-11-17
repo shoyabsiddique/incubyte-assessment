@@ -69,7 +69,7 @@ An HR Manager can open an Employee to see the profile, the Current Compensation 
 An HR Manager can add an Employee with profile fields and an initial Compensation Record, and edit profile fields.
 **Consequences (testable):**
 - Work email and Employee ID are unique; duplicates are rejected with a clear message.
-- Required fields are validated server-side; the Original Currency must match the Employee's country.
+- Required fields are validated server-side; the Original Currency must match the Employee's country at creation.
 
 ### 4.3 Salary Revisions and Audit
 **Description:** Salary changes are revisions, not overwrites. Every change is attributable.
@@ -78,7 +78,7 @@ An HR Manager can add an Employee with profile fields and an initial Compensatio
 An HR Manager can revise an Employee's salary by entering a new annual gross base salary and effective start date.
 **Consequences (testable):**
 - The previous Current Compensation Record gets an effective end date the day before the new start date; the new record becomes Current.
-- Effective start date cannot precede the Current record's start date.
+- Effective start date must be strictly after the latest record's start date.
 - Salary must be a positive amount.
 
 #### FR-6: Audit Entries
