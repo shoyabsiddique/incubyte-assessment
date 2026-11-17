@@ -278,7 +278,9 @@ class EmployeeDirectoryIT extends AbstractMariaDbIntegrationTest {
             ok(path); // warm up
             Instant start = Instant.now();
             ok(path);
-            assertThat(Duration.between(start, Instant.now())).as(path).isLessThan(Duration.ofMillis(500));
+            Duration took = Duration.between(start, Instant.now());
+            System.out.println("WARM-TIMING " + path + " took " + took.toMillis() + " ms");
+            assertThat(took).as(path).isLessThan(Duration.ofMillis(500));
         }
     }
 

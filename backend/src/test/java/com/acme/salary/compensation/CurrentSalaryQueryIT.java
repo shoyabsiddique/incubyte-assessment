@@ -93,6 +93,27 @@ class CurrentSalaryQueryIT extends AbstractMariaDbIntegrationTest {
     }
 
     @Test
+    void whenManyPeopleAreWantedOnlyThoseAskedForComeBack() {
+        LocalDate today = LocalDate.now(java.time.ZoneOffset.UTC);
+        List<UUID> wanted = new ArrayList<>();
+        for (int i = 0; i < 1_100; i++) {
+            UUID id = employee(2_000 + i);
+            record(id, "10.00", "USD", today.minusYears(1), null);
+            wanted.add(id);
+        }
+        List<UUID> notWanted = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            UUID id = employee(4_000 + i);
+            record(id, "10.00", "USD", today.minusYears(1), null);
+            notWanted.add(id);
+        }
+
+        Map<UUID, Money> result = salaries.currentSalaries(wanted);
+
+        assertThat(result).hasSize(1_100).doesNotContainKeys(notWanted.toArray(UUID[]::new));
+    }
+
+    @Test
     void anEmptyListOfIdsGivesAnEmptyResult() {
         assertThat(salaries.currentSalaries(List.of())).isEmpty();
         assertThat(salaries.rankByCurrentUsd(List.of(), true)).isEmpty();

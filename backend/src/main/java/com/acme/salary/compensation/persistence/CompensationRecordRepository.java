@@ -15,4 +15,10 @@ public interface CompensationRecordRepository extends JpaRepository<Compensation
             + "from CompensationRecordEntity r where r.employeeId in :ids "
             + "and r.effectiveStart <= :today and (r.effectiveEnd is null or r.effectiveEnd >= :today)")
     List<CurrentSalaryRow> findCurrent(@Param("ids") Collection<UUID> ids, @Param("today") LocalDate today);
+
+    /** Everyone's current pay in one query, cheaper than many large IN lists when most people are wanted. */
+    @Query("select new com.acme.salary.compensation.persistence.CurrentSalaryRow(r.employeeId, r.amount, r.currency) "
+            + "from CompensationRecordEntity r "
+            + "where r.effectiveStart <= :today and (r.effectiveEnd is null or r.effectiveEnd >= :today)")
+    List<CurrentSalaryRow> findAllCurrent(@Param("today") LocalDate today);
 }

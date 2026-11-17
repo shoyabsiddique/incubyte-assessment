@@ -14,8 +14,10 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.Currency;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,15 +42,29 @@ public class CurrentSalaryService implements CurrentSalaryQuery {
     @Override
     public Map<UUID, Money> currentSalaries(Collection<UUID> employeeIds) {
         LocalDate today = LocalDate.now(clock);
-        List<UUID> ids = new ArrayList<>(employeeIds);
         Map<UUID, Money> salaries = new HashMap<>();
+        if (employeeIds.size() > CHUNK_SIZE) {
+            // Many people wanted: one query for everyone's current pay beats many large IN lists.
+            Set<UUID> wanted = new HashSet<>(employeeIds);
+            for (CurrentSalaryRow row : records.findAllCurrent(today)) {
+                if (wanted.contains(row.employeeId())) {
+                    salaries.putIfAbsent(row.employeeId(), money(row));
+                }
+            }
+            return salaries;
+        }
+        List<UUID> ids = new ArrayList<>(employeeIds);
         for (int from = 0; from < ids.size(); from += CHUNK_SIZE) {
             List<UUID> chunk = ids.subList(from, Math.min(from + CHUNK_SIZE, ids.size()));
             for (CurrentSalaryRow row : records.findCurrent(chunk, today)) {
-                salaries.putIfAbsent(row.employeeId(), Money.of(row.amount(), Currency.getInstance(row.currency())));
+                salaries.putIfAbsent(row.employeeId(), money(row));
             }
         }
         return salaries;
+    }
+
+    private static Money money(CurrentSalaryRow row) {
+        return Money.of(row.amount(), Currency.getInstance(row.currency()));
     }
 
     @Override
