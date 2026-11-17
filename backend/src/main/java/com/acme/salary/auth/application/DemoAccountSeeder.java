@@ -5,10 +5,11 @@ import com.acme.salary.auth.persistence.AppUserRepository;
 import java.util.UUID;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.context.annotation.Profile;
+import org.springframework.core.env.Environment;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -29,8 +30,13 @@ public class DemoAccountSeeder implements ApplicationRunner {
     private final PasswordEncoder encoder;
     private final String password;
 
-    public DemoAccountSeeder(
-            AppUserRepository users, PasswordEncoder encoder, @Value("${DEMO_HR_PASSWORD:${app.seed.hr-password:}}") String password) {
+    /** The password comes from DEMO_HR_PASSWORD when it has a value, otherwise from app.seed.hr-password. */
+    @Autowired
+    public DemoAccountSeeder(AppUserRepository users, PasswordEncoder encoder, Environment environment) {
+        this(users, encoder, resolvePassword(environment));
+    }
+
+    public DemoAccountSeeder(AppUserRepository users, PasswordEncoder encoder, String password) {
         if (password == null || password.isBlank()) {
             throw new IllegalStateException("DEMO_HR_PASSWORD must be set to create the demo accounts");
         }
@@ -43,6 +49,14 @@ public class DemoAccountSeeder implements ApplicationRunner {
         this.users = users;
         this.encoder = encoder;
         this.password = password;
+    }
+
+    private static String resolvePassword(Environment environment) {
+        String fromEnvironment = environment.getProperty("DEMO_HR_PASSWORD");
+        if (fromEnvironment != null && !fromEnvironment.isBlank()) {
+            return fromEnvironment;
+        }
+        return environment.getProperty("app.seed.hr-password", "");
     }
 
     @Override

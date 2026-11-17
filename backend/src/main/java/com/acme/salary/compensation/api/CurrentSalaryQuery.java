@@ -1,5 +1,6 @@
 package com.acme.salary.compensation.api;
 
+import com.acme.salary.shared.domain.ExchangeRates;
 import com.acme.salary.shared.domain.Money;
 import java.util.Collection;
 import java.util.List;
@@ -17,7 +18,8 @@ public interface CurrentSalaryQuery {
 
     /**
      * The given employees ordered by current salary in USD, highest first when {@code descending}.
-     * People without a current salary come last, and equal salaries keep the order given.
+     * The caller supplies the rate snapshot, so a request converts everything with the same rates it
+     * shows. People without a current salary come last, and equal salaries keep the order given.
      */
-    List<UUID> rankByCurrentUsd(Collection<UUID> employeeIds, boolean descending);
+    List<UUID> rankByCurrentUsd(Collection<UUID> employeeIds, boolean descending, ExchangeRates rates);
 }

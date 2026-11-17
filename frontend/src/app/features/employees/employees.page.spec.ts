@@ -114,7 +114,7 @@ describe('EmployeesPage', () => {
       'Software Engineer',
       'Engineering',
       'India',
-      'ACTIVE',
+      'Active',
     ]) {
       expect(first).toContain(text);
     }
@@ -234,5 +234,110 @@ describe('EmployeesPage', () => {
     await fixture.whenStable();
 
     expect(lastListRequest().request.params.get('page')).toBe('1');
+  });
+
+  it('shows the problem the server describes, without a pointless retry, when the search is rejected', async () => {
+    http.expectOne(`${API}/employees/filters`).flush(FILTERS);
+    listRequests()[0].flush(
+      { code: 'INVALID_SEARCH', detail: 'search for at most 10 words' },
+      { status: 400, statusText: 'Bad Request' },
+    );
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(page.querySelector('[role="alert"]')?.textContent).toContain(
+      'search for at most 10 words',
+    );
+    expect(page.querySelector('button.retry')).toBeNull();
+  });
+
+  it('clears the old rows and total when a later request fails', async () => {
+    await loadFirstPage([employee(1)], { totalElements: 100, totalPages: 5 });
+
+    fixture.componentInstance['retry']();
+    listRequests()[0].flush({}, { status: 500, statusText: 'Server Error' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(page.querySelectorAll('tr[mat-row]')).toHaveLength(0);
+    expect(page.querySelector('.mat-mdc-paginator-range-label')?.textContent).toContain('0 of 0');
+  });
+
+  it('does not search again when only trailing spaces were typed', async () => {
+    vi.useFakeTimers();
+    await loadFirstPage();
+    const input = page.querySelector('input.search') as HTMLInputElement;
+
+    input.value = 'priya';
+    input.dispatchEvent(new Event('input'));
+    vi.advanceTimersByTime(300);
+    expect(listRequests()).toHaveLength(1);
+
+    input.value = 'priya  ';
+    input.dispatchEvent(new Event('input'));
+    vi.advanceTimersByTime(300);
+    expect(listRequests()).toHaveLength(0);
+  });
+
+  it('shows when each person was hired and sorts by it', async () => {
+    await loadFirstPage();
+
+    expect(page.querySelector('tr[mat-row]')?.textContent).toContain('Jan 15, 2020');
+    (page.querySelector('th.mat-column-hireDate') as HTMLElement).click();
+    await fixture.whenStable();
+    expect(lastListRequest().request.params.get('sort')).toBe('hireDate,asc');
+  });
+
+  it('writes enum values as plain words', async () => {
+    await loadFirstPage([employee(1, { status: 'ON_LEAVE' })]);
+
+    expect(page.querySelector('tr[mat-row]')?.textContent).toContain('On leave');
+    expect(page.querySelector('tr[mat-row]')?.textContent).not.toContain('ON_LEAVE');
+  });
+
+  it('labels the table and the loading bar for assistive technology', async () => {
+    expect(page.querySelector('mat-progress-bar')?.getAttribute('aria-label')).toBe(
+      'Loading employees',
+    );
+    await loadFirstPage();
+
+    expect(page.querySelector('table')?.getAttribute('aria-label')).toBe('Employees');
+  });
+
+  describe('choosing a value in each dropdown', () => {
+    async function choose(selectIndex: number, optionText: string) {
+      const trigger = page
+        .querySelectorAll('mat-select')
+        [selectIndex].querySelector('.mat-mdc-select-trigger');
+      (trigger as HTMLElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      const option = Array.from(document.querySelectorAll('mat-option')).find(
+        (o) => o.textContent?.trim() === optionText,
+      ) as HTMLElement;
+      option.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+    }
+
+    const cases: ReadonlyArray<readonly [string, number, string, string, string]> = [
+      ['Country', 0, 'India', 'country', 'INDIA'],
+      ['Department', 1, 'Finance', 'department', 'Finance'],
+      ['Job title', 2, 'Accountant', 'jobTitle', 'Accountant'],
+      ['Employment type', 3, 'Part time', 'employmentType', 'PART_TIME'],
+      ['Status', 4, 'On leave', 'status', 'ON_LEAVE'],
+    ];
+
+    for (const [name, index, label, parameter, value] of cases) {
+      it(`sends ${parameter}=${value} when ${label} is chosen in the ${name} dropdown`, async () => {
+        await loadFirstPage();
+
+        await choose(index, label);
+
+        const request = lastListRequest();
+        expect(request.request.params.get(parameter)).toBe(value);
+        expect(request.request.params.get('page')).toBe('0');
+      });
+    }
   });
 });

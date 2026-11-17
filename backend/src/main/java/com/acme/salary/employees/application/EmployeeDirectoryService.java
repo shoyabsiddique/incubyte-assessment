@@ -45,7 +45,7 @@ public class EmployeeDirectoryService {
 
     /** Salary lives in another module, so rank everyone matching through its api, then slice the page. */
     private DirectoryPage searchBySalary(DirectoryQuery query, ExchangeRates rates) {
-        List<UUID> ranked = salaries.rankByCurrentUsd(store.matchingIds(query), query.direction() == SortDirection.DESC);
+        List<UUID> ranked = salaries.rankByCurrentUsd(store.matchingIds(query), query.direction() == SortDirection.DESC, rates);
         int from = (int) Math.min((long) query.page() * query.size(), ranked.size());
         int to = Math.min(from + query.size(), ranked.size());
         List<EmployeeEntity> pageOfEmployees = store.byIdsInOrder(ranked.subList(from, to));

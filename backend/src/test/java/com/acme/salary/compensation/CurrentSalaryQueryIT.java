@@ -23,6 +23,9 @@ class CurrentSalaryQueryIT extends AbstractMariaDbIntegrationTest {
     private CurrentSalaryQuery salaries;
 
     @Autowired
+    private com.acme.salary.compensation.api.ExchangeRateQuery rates;
+
+    @Autowired
     private JdbcTemplate jdbc;
 
     @AfterEach
@@ -54,6 +57,20 @@ class CurrentSalaryQueryIT extends AbstractMariaDbIntegrationTest {
         Map<UUID, Money> result = salaries.currentSalaries(List.of(id));
 
         assertThat(result.get(id)).isEqualTo(Money.of("120.00", Currency.getInstance("USD")));
+    }
+
+    @Test
+    void whenTwoRecordsCoverTodayTheLatestStartWinsEveryTime() {
+        UUID id = employee(5);
+        LocalDate today = LocalDate.now(java.time.ZoneOffset.UTC);
+        record(id, "100.00", "USD", today.minusYears(2), today.plusDays(5));
+        record(id, "130.00", "USD", today.minusYears(1), null);
+        record(id, "115.00", "USD", today.minusMonths(6), today.plusDays(1));
+
+        for (int i = 0; i < 5; i++) {
+            assertThat(salaries.currentSalaries(List.of(id)).get(id))
+                    .isEqualTo(Money.of("115.00", Currency.getInstance("USD")));
+        }
     }
 
     @Test
@@ -116,7 +133,7 @@ class CurrentSalaryQueryIT extends AbstractMariaDbIntegrationTest {
     @Test
     void anEmptyListOfIdsGivesAnEmptyResult() {
         assertThat(salaries.currentSalaries(List.of())).isEmpty();
-        assertThat(salaries.rankByCurrentUsd(List.of(), true)).isEmpty();
+        assertThat(salaries.rankByCurrentUsd(List.of(), true, rates.snapshot())).isEmpty();
     }
 
     @Test
@@ -132,8 +149,8 @@ class CurrentSalaryQueryIT extends AbstractMariaDbIntegrationTest {
 
         List<UUID> all = List.of(rupees, dollars, pounds, nobody);
 
-        assertThat(salaries.rankByCurrentUsd(all, true)).containsExactly(dollars, pounds, rupees, nobody);
-        assertThat(salaries.rankByCurrentUsd(all, false)).containsExactly(rupees, pounds, dollars, nobody);
+        assertThat(salaries.rankByCurrentUsd(all, true, rates.snapshot())).containsExactly(dollars, pounds, rupees, nobody);
+        assertThat(salaries.rankByCurrentUsd(all, false, rates.snapshot())).containsExactly(rupees, pounds, dollars, nobody);
     }
 
     @Test
@@ -146,7 +163,7 @@ class CurrentSalaryQueryIT extends AbstractMariaDbIntegrationTest {
             record(id, "50000.00", "USD", today.minusYears(1), null);
         }
 
-        assertThat(salaries.rankByCurrentUsd(List.of(second, third, first), true)).containsExactly(second, third, first);
-        assertThat(salaries.rankByCurrentUsd(List.of(second, third, first), false)).containsExactly(second, third, first);
+        assertThat(salaries.rankByCurrentUsd(List.of(second, third, first), true, rates.snapshot())).containsExactly(second, third, first);
+        assertThat(salaries.rankByCurrentUsd(List.of(second, third, first), false, rates.snapshot())).containsExactly(second, third, first);
     }
 }

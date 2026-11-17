@@ -1,4 +1,5 @@
-import { DecimalPipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
@@ -16,6 +17,7 @@ import {
   catchError,
   debounceTime,
   distinctUntilChanged,
+  map,
   of,
   switchMap,
   tap,
@@ -27,6 +29,16 @@ import {
   EmployeeSummary,
   FilterOptions,
 } from './employee.service';
+
+const DEFAULT_ERROR = 'The employees could not be loaded.';
+
+function isFailure(result: unknown): result is HttpErrorResponse | Error {
+  return (
+    result instanceof Error ||
+    result instanceof HttpErrorResponse ||
+    !('items' in (result as object))
+  );
+}
 
 type FilterName = 'country' | 'department' | 'jobTitle' | 'employmentType' | 'status';
 
@@ -47,6 +59,7 @@ const FIRST_QUERY: EmployeeQuery = {
   selector: 'app-employees-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    DatePipe,
     DecimalPipe,
     ReactiveFormsModule,
     RouterLink,
@@ -74,12 +87,15 @@ export class EmployeesPage {
     'department',
     'country',
     'status',
+    'hireDate',
     'salary',
     'salaryUsd',
   ];
   protected readonly searchControl = new FormControl('', { nonNullable: true });
   protected readonly query = signal<EmployeeQuery>(FIRST_QUERY);
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
+  protected readonly errorMessage = signal(DEFAULT_ERROR);
+  protected readonly retryable = signal(true);
   protected readonly rows = signal<EmployeeSummary[]>([]);
   protected readonly total = signal(0);
   protected readonly filters = signal<FilterOptions | null>(null);
@@ -93,15 +109,22 @@ export class EmployeesPage {
         }),
         // switchMap drops an older answer if a newer request has been made since
         switchMap((query) =>
-          this.service.search(query).pipe(catchError(() => of<EmployeePage | null>(null))),
+          this.service.search(query).pipe(catchError((error: unknown) => of(error))),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe((page) => {
-        if (page === null) {
+      .subscribe((result) => {
+        if (isFailure(result)) {
+          this.rows.set([]);
+          this.total.set(0);
+          // A rejected search says what is wrong; retrying the same request would fail the same way.
+          const rejected = result instanceof HttpErrorResponse && result.status === 400;
+          this.errorMessage.set((rejected && result.error?.detail) || DEFAULT_ERROR);
+          this.retryable.set(!rejected);
           this.state.set('error');
           return;
         }
+        const page = result as EmployeePage;
         this.rows.set(page.items);
         this.total.set(page.totalElements);
         this.state.set('ready');
@@ -116,8 +139,19 @@ export class EmployeesPage {
       .subscribe((options) => this.filters.set(options));
 
     this.searchControl.valueChanges
-      .pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed(this.destroyRef))
+      .pipe(
+        debounceTime(300),
+        map((q) => q.trim()),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef),
+      )
       .subscribe((q) => this.change({ q, page: 0 }));
+  }
+
+  /** Writes an enum value such as ON_LEAVE as plain words: "On leave". */
+  protected label(value: string): string {
+    const words = value.replace(/_/g, ' ').toLowerCase();
+    return words.charAt(0).toUpperCase() + words.slice(1);
   }
 
   protected setFilter(name: FilterName, value: string): void {

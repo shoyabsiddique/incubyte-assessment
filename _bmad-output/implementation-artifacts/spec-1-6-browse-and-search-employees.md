@@ -64,3 +64,29 @@ context:
 - Given ArchUnit, then all rules pass unchanged.
 
 ## Implementation Notes
+
+## Implementation Notes (added after review)
+
+The spec says large id lists are looked up in chunks of at most 1,000. The code does this only up to 1,000 ids per query. Above that it reads everyone's current pay in one query and picks the wanted people in memory. Measured on the seeded 10,000 employees, sorting everyone by salary took 438 to 682 ms with chunked IN lists and 114 to 190 ms with the single query, so the single query is what meets the 500 ms target. This is recorded here because the frozen text cannot be edited.
+
+## Review Triage Log
+
+| Finding | Verdict | Route | Evidence |
+|---|---|---|---|
+| Salary sort took one rate snapshot for ranking and another for display | medium | patch (done) | `rankByCurrentUsd` now takes the request's snapshot; one snapshot per request |
+| Overlapping periods covering today picked an arbitrary salary | medium | patch (done) | Queries order by latest start; test with three overlapping records, repeated |
+| Chunk loop was dead code above 1,000 ids; claim did not match code | low | patch (done) | Loop removed, two clear paths, deviation recorded above |
+| Only name and salary sorts tested; other sort mappings and tie-breaks unverified; name descending check weak | high | patch (done) | Every sort field and direction compared with the database's own order (tie by Employee ID), name asc and desc over 100 rows, page continuity, country order checked against the displayed names |
+| Wildcard test could not detect a missing ESCAPE clause | medium | patch (done) | Positive test: a person with `_`, `%` and `!` in their name is found by exactly those characters and nobody else |
+| Mislabelled "partial last page" test; timing test printed to stdout | low | patch (done) | Real partial last page (page 333 of 334 has 10 people); timing now reported in the failure message only |
+| Seeder password: a blank environment variable beat a valid property; tests did not prove which value won; one test failed if the variable was set on the machine | medium | patch (done) | Resolved in code (environment value if not blank, else property); tests check the actual stored hash for each case and neutralise the real environment |
+| Empty `?size=` or `?page=` rejected instead of using the default | low | patch (done) | Blank means default; test |
+| Missing person between ranking and fetch caused an NPE | low | patch (done) | Missing people are left out |
+| Rejected search showed a generic message with a retry that cannot succeed | medium | patch (done) | A 400 shows the server's message with no retry; a failure also clears the old rows and total |
+| Trailing space caused a duplicate search | low | patch (done) | Trim before the unchanged check; test |
+| Dropdown wiring untested through the template | medium | patch (done) | Each of the five dropdowns is opened and an option chosen; the request parameter and page reset are asserted |
+| Hire date, plain-word labels, accessible labels | low | patch (done) | Hired column (sortable), "On leave" instead of ON_LEAVE, table and loading bar labelled |
+| One unconvertible currency would fail the whole list | low | rejected | Every currency has a rate by a foreign key and the snapshot is checked complete at load |
+| No migration or index for LIKE search | low | rejected | A leading wildcard cannot use an index; 10,000 rows measure 40 to 80 ms |
+| Department and job title matching depends on collation | low | rejected | Values come from the dropdown fed by the same column |
+| Filter, sort and page not in the URL; local salary column not sortable; no authorization tests beyond 401; test ordering | low | rejected | Out of scope for this story; each test class seeds and cleans its own data |

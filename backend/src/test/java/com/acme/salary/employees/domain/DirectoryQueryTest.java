@@ -43,6 +43,14 @@ class DirectoryQueryTest {
     }
 
     @Test
+    void blankPageAndSizeMeanTheDefaultsRatherThanAnError() {
+        DirectoryQuery q = query("", "  ", null, null, null, null, null, null, null);
+
+        assertThat(q.page()).isZero();
+        assertThat(q.size()).isEqualTo(20);
+    }
+
+    @Test
     void acceptsAPageSizeUpToTheHardMaximumOfOneHundred() {
         assertThat(query("3", "100", null, null, null, null, null, null, null).size()).isEqualTo(100);
         assertThat(query("3", "100", null, null, null, null, null, null, null).page()).isEqualTo(3);

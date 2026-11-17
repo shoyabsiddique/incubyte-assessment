@@ -41,8 +41,8 @@ public record DirectoryQuery(
             String jobTitle,
             String employmentType,
             String status) {
-        int pageNumber = page == null ? 0 : wholeNumber(page, "INVALID_PAGE", "page");
-        int pageSize = size == null ? DEFAULT_SIZE : wholeNumber(size, "INVALID_PAGE", "size");
+        int pageNumber = page == null || page.isBlank() ? 0 : wholeNumber(page, "INVALID_PAGE", "page");
+        int pageSize = size == null || size.isBlank() ? DEFAULT_SIZE : wholeNumber(size, "INVALID_PAGE", "size");
         if (pageNumber < 0) {
             throw invalid("INVALID_PAGE", "page must not be negative");
         }

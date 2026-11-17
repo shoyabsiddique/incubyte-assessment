@@ -62,7 +62,8 @@ public class EmployeeDirectoryStore {
     public List<EmployeeEntity> byIdsInOrder(List<UUID> ids) {
         Map<UUID, EmployeeEntity> found = employees.findAllById(ids).stream()
                 .collect(Collectors.toMap(EmployeeEntity::getId, Function.identity()));
-        return ids.stream().map(found::get).toList();
+        // someone removed since the ranking was made is simply left out
+        return ids.stream().map(found::get).filter(java.util.Objects::nonNull).toList();
     }
 
     public List<String> departments() {

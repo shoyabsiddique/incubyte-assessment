@@ -47,7 +47,7 @@
     >
       <mat-option value="">All types</mat-option>
       @for (option of filters()?.employmentTypes ?? []; track option) {
-        <mat-option [value]="option">{{ option }}</mat-option>
+        <mat-option [value]="option">{{ label(option) }}</mat-option>
       }
     </mat-select>
   </mat-form-field>
@@ -57,26 +57,29 @@
     <mat-select [value]="query().status" (selectionChange)="setFilter('status', $event.value)">
       <mat-option value="">All statuses</mat-option>
       @for (option of filters()?.statuses ?? []; track option) {
-        <mat-option [value]="option">{{ option }}</mat-option>
+        <mat-option [value]="option">{{ label(option) }}</mat-option>
       }
     </mat-select>
   </mat-form-field>
 </section>
 
 @if (state() === 'loading') {
-  <mat-progress-bar mode="indeterminate" />
+  <mat-progress-bar mode="indeterminate" aria-label="Loading employees" />
 }
 
 @if (state() === 'error') {
   <p class="error" role="alert">
-    The employees could not be loaded.
-    <button mat-button type="button" class="retry" (click)="retry()">Try again</button>
+    {{ errorMessage() }}
+    @if (retryable()) {
+      <button mat-button type="button" class="retry" (click)="retry()">Try again</button>
+    }
   </p>
 } @else {
   <div class="table-scroll">
     <table
       mat-table
       matSort
+      aria-label="Employees"
       [dataSource]="rows()"
       [matSortActive]="query().sort"
       [matSortDirection]="query().direction"
@@ -111,7 +114,12 @@
 
       <ng-container matColumnDef="status">
         <th mat-header-cell *matHeaderCellDef mat-sort-header="status">Status</th>
-        <td mat-cell *matCellDef="let e">{{ e.status }}</td>
+        <td mat-cell *matCellDef="let e">{{ label(e.status) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="hireDate">
+        <th mat-header-cell *matHeaderCellDef mat-sort-header="hireDate">Hired</th>
+        <td mat-cell *matCellDef="let e">{{ e.hireDate | date: 'mediumDate' }}</td>
       </ng-container>
 
       <ng-container matColumnDef="salary">

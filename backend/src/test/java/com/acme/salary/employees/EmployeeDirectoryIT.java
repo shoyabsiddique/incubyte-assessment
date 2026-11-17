@@ -96,10 +96,12 @@ class EmployeeDirectoryIT extends AbstractMariaDbIntegrationTest {
     @Test
     void pagesDoNotOverlapAndTheLastPageIsPartial() throws Exception {
         JsonNode second = ok("/api/v1/employees?page=1&size=100");
-        JsonNode last = ok("/api/v1/employees?page=99&size=101".replace("101", "100"));
+        JsonNode last = ok("/api/v1/employees?page=333&size=30"); // 10,000 people in pages of 30
 
         assertThat(second.get("items").get(0).get("employeeId").asString()).isEqualTo("EMP-000101");
-        assertThat(last.get("items")).hasSize(100);
+        assertThat(last.get("totalPages").asInt()).isEqualTo(334);
+        assertThat(last.get("items")).hasSize(10);
+        assertThat(last.get("items").get(9).get("employeeId").asString()).isEqualTo("EMP-010000");
         assertThat(ok("/api/v1/employees?page=100&size=100").get("items")).isEmpty();
     }
 
@@ -157,6 +159,22 @@ class EmployeeDirectoryIT extends AbstractMariaDbIntegrationTest {
     }
 
     @Test
+    void literalWildcardCharactersInRealDataAreFoundAndOnlyThoseRows() throws Exception {
+        jdbc.update("INSERT INTO employee (id, employee_id, first_name, last_name, work_email, job_title, department, "
+                + "country, city, employment_type, hire_date, status) VALUES (?, 'EMP-950001', 'Jo_%Ann!', 'Wildcard', "
+                + "'wild.card@acme.example', 'Accountant', 'Finance', 'INDIA', 'Pune', 'FULL_TIME', '2020-01-15', 'ACTIVE')",
+                UUID.randomUUID().toString());
+        try {
+            for (String q : new String[] {"_", "%", "!", "o_%a", "ann!"}) {
+                assertThat(ok("/api/v1/employees?q=" + enc(q)).get("totalElements").asLong()).as(q).isEqualTo(1);
+            }
+            assertThat(ok("/api/v1/employees?q=jo").get("totalElements").asLong()).isGreaterThan(1);
+        } finally {
+            jdbc.update("DELETE FROM employee WHERE employee_id = 'EMP-950001'");
+        }
+    }
+
+    @Test
     void percentUnderscoreAndBackslashAreMatchedLiterally() throws Exception {
         for (String wild : new String[] {"%", "_", "\\", "%%", "a%"}) {
             assertThat(ok("/api/v1/employees?q=" + enc(wild)).get("totalElements").asLong()).as(wild).isZero();
@@ -211,14 +229,49 @@ class EmployeeDirectoryIT extends AbstractMariaDbIntegrationTest {
     // ---- sorting -------------------------------------------------------------------------------
 
     @Test
-    void sortsByNameAndByHireDateBothWays() throws Exception {
-        List<String> asc = names("/api/v1/employees?size=100&sort=name,asc");
-        List<String> desc = names("/api/v1/employees?size=100&sort=name,desc");
+    void everySortFieldOrdersByItsOwnColumnInBothDirectionsWithEmployeeIdAsTheTieBreak() throws Exception {
+        java.util.Map<String, String> columns = java.util.Map.of(
+                "jobTitle", "job_title", "department", "department", "country", "country",
+                "hireDate", "hire_date", "status", "status");
 
-        List<String> sortedAsc = new ArrayList<>(asc);
-        sortedAsc.sort(String.CASE_INSENSITIVE_ORDER);
-        assertThat(asc).isEqualTo(sortedAsc);
-        assertThat(desc.get(0).compareToIgnoreCase(desc.get(99))).isGreaterThanOrEqualTo(0);
+        for (var column : columns.entrySet()) {
+            for (String direction : new String[] {"asc", "desc"}) {
+                List<String> expected = jdbc.queryForList(
+                        "SELECT employee_id FROM employee ORDER BY " + column.getValue() + " " + direction.toUpperCase()
+                                + ", employee_id ASC LIMIT 100",
+                        String.class);
+
+                assertThat(ids("/api/v1/employees?size=100&sort=" + column.getKey() + "," + direction))
+                        .as(column.getKey() + "," + direction)
+                        .isEqualTo(expected);
+            }
+        }
+    }
+
+    @Test
+    void sortsByLastThenFirstNameBothWaysAndPagesContinueWithoutGapsOrRepeats() throws Exception {
+        List<String> expectedAsc = jdbc.queryForList(
+                "SELECT employee_id FROM employee ORDER BY last_name ASC, first_name ASC, employee_id ASC LIMIT 100", String.class);
+        List<String> expectedDesc = jdbc.queryForList(
+                "SELECT employee_id FROM employee ORDER BY last_name DESC, first_name DESC, employee_id ASC LIMIT 100", String.class);
+
+        assertThat(ids("/api/v1/employees?size=100&sort=name,asc")).isEqualTo(expectedAsc);
+        assertThat(ids("/api/v1/employees?size=100&sort=name,desc")).isEqualTo(expectedDesc);
+
+        List<String> joined = new ArrayList<>(ids("/api/v1/employees?size=50&page=0&sort=name,asc"));
+        joined.addAll(ids("/api/v1/employees?size=50&page=1&sort=name,asc"));
+        assertThat(joined).isEqualTo(expectedAsc);
+    }
+
+    @Test
+    void sortingByCountryFollowsTheCountryNamesThePeopleSee() throws Exception {
+        JsonNode firstAscending = ok("/api/v1/employees?size=100&sort=country,asc");
+        JsonNode firstDescending = ok("/api/v1/employees?size=100&sort=country,desc");
+        JsonNode lastAscending = ok("/api/v1/employees?size=100&page=99&sort=country,asc");
+
+        assertThat(firstAscending.get("items").get(0).get("countryName").asString()).isEqualTo("Australia");
+        assertThat(firstDescending.get("items").get(0).get("countryName").asString()).isEqualTo("United States");
+        assertThat(lastAscending.get("items").get(99).get("countryName").asString()).isEqualTo("United States");
     }
 
     @Test
@@ -279,8 +332,7 @@ class EmployeeDirectoryIT extends AbstractMariaDbIntegrationTest {
             Instant start = Instant.now();
             ok(path);
             Duration took = Duration.between(start, Instant.now());
-            System.out.println("WARM-TIMING " + path + " took " + took.toMillis() + " ms");
-            assertThat(took).as(path).isLessThan(Duration.ofMillis(500));
+            assertThat(took).as(path + " took " + took.toMillis() + " ms").isLessThan(Duration.ofMillis(500));
         }
     }
 
