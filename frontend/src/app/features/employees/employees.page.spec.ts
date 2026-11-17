@@ -340,4 +340,13 @@ describe('EmployeesPage', () => {
       });
     }
   });
+
+  describe('adding an employee', () => {
+    it('links to the add employee form', async () => {
+      const link = page.querySelector('a.add-employee') as HTMLAnchorElement;
+      expect(link.getAttribute('href')).toBe('/employees/new');
+      expect(link.textContent).toContain('Add employee');
+    });
+  });
+
 });

@@ -137,4 +137,25 @@ describe('app routes', () => {
       );
     });
   });
+
+  describe('the add employee route', () => {
+    it('is a guarded lazy route that comes before the employee id route', () => {
+      const index = routes.findIndex((r) => r.path === 'employees/new');
+
+      expect(index).toBeGreaterThan(-1);
+      expect(index).toBeLessThan(routes.findIndex((r) => r.path === 'employees/:id'));
+      expect(routes[index].canActivate).toBeDefined();
+      expect(routes[index].loadComponent).toBeTypeOf('function');
+    });
+
+    it('opens the form with a tab title for a signed-in user', async () => {
+      signIn();
+
+      const page = await open('/employees/new');
+
+      expect(page.querySelector('app-employee-form')).not.toBeNull();
+      expect(document.title).toBe('Add employee | ACME Salary Management');
+    });
+  });
+
 });

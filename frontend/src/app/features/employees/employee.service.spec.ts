@@ -102,4 +102,21 @@ describe('EmployeeService', () => {
 
     expect(http.expectOne(`${API}/employees/abc-123/salary-history`).request.method).toBe('GET');
   });
+
+  it('creates an employee with a POST', () => {
+    service.create({ firstName: 'Ada' } as never).subscribe();
+
+    const request = http.expectOne(`${API}/employees`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ firstName: 'Ada' });
+  });
+
+  it('updates an employee with a PUT that carries the version', () => {
+    service.update('abc-123', { firstName: 'Ada' } as never, 7).subscribe();
+
+    const request = http.expectOne(`${API}/employees/abc-123`);
+    expect(request.request.method).toBe('PUT');
+    expect(request.request.body).toEqual({ firstName: 'Ada', version: 7 });
+  });
+
 });

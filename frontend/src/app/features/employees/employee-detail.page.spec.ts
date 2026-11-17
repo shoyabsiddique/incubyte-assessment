@@ -239,4 +239,49 @@ describe('EmployeeDetailPage', () => {
 
     expect(page.querySelector('section.message')?.getAttribute('role')).toBe('status');
   });
+
+  it('offers to edit the profile and shows the form with the current values', async () => {
+    await loadEverything();
+
+    (page.querySelector('button.edit') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const form = page.querySelector('app-employee-form');
+    expect(form).not.toBeNull();
+    expect((form?.querySelector('[formcontrolname="firstName"]') as HTMLInputElement).value).toBe(
+      'Charlotte',
+    );
+  });
+
+  it('shows the updated profile after a successful save', async () => {
+    await loadEverything();
+    (page.querySelector('button.edit') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const input = page.querySelector('[formcontrolname="jobTitle"]') as HTMLInputElement;
+    input.value = 'Staff Engineer';
+    input.dispatchEvent(new Event('input'));
+
+    (page.querySelector('app-employee-form button[type="submit"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    http
+      .expectOne(`${API}/employees/${ID}`)
+      .flush({ ...EMPLOYEE, jobTitle: 'Staff Engineer', version: 1 });
+    await settle();
+
+    expect(page.querySelector('app-employee-form')).toBeNull();
+    expect(page.querySelector('.profile')?.textContent).toContain('Staff Engineer');
+  });
+
+  it('has an audit history tab for this employee', async () => {
+    await loadEverything();
+
+    const labels = Array.from(page.querySelectorAll('[role="tab"]')).map((t) =>
+      t.textContent?.trim(),
+    );
+    expect(labels).toEqual(['Details', 'Audit history']);
+  });
+
 });
