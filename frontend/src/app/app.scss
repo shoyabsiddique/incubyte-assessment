@@ -1,0 +1,17 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.layout {
+  flex: 1;
+}
+
+.sidenav {
+  width: 240px;
+}
+
+.content {
+  padding: 24px;
+}
