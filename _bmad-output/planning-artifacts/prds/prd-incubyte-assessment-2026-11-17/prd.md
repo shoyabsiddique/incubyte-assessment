@@ -82,10 +82,10 @@ An HR Manager can revise an Employee's salary by entering a new annual gross bas
 - Salary must be a positive amount.
 
 #### FR-6: Audit Entries
-Each salary modification writes an Audit Entry with the authenticated user's ID, timestamp, previous value and new value, in the same transaction as the change.
+Each salary revision, Exchange Rate edit and Employee profile edit writes an Audit Entry with the authenticated user's ID, entity type and ID, operation, previous values, new values and timestamp, in the same transaction as the change. Audit entries hold no more personal data than needed.
 **Consequences (testable):**
 - If the audit write fails, the salary change is rolled back.
-- An HR Manager can view the audit trail of an Employee and a global trail filtered by user and date; entries cannot be edited or deleted through the application.
+- An HR Manager can view the audit trail of an Employee and a global trail filtered by user, entity type and date; entries cannot be edited or deleted through the application.
 
 ### 4.4 Compensation Analytics
 **Description:** Distribution of Current salaries across countries, departments and job titles, all in USD Equivalent so countries are comparable. Local currency is shown alongside where a single country is selected. Analytics cover Employees with active employment status. `[ASSUMPTION: terminated or on-leave staff excluded]`
@@ -158,7 +158,7 @@ The product stays focused on compensation management, analytics, auditability an
 ## 7. MVP Scope
 
 **In scope:** FR-1 to FR-12 above.
-**Out of scope for MVP:** everything in §6; audit of Employee profile edits (only salary and exchange-rate changes are audited); charts beyond what the demo questions need.
+**Out of scope for MVP:** everything in §6; charts beyond what the demo questions need.
 
 ## 8. Success Metrics
 
