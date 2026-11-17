@@ -47,6 +47,11 @@ class ArchitectureTest {
     }
 
     @Test
+    void servicesThatWriteThroughARepositoryAuditTheirWrites() {
+        ArchitectureRules.writingServicesDependOnAuditTrail(BASE).check(classes);
+    }
+
+    @Test
     void domainCodeIsFrameworkFree() {
         ArchitectureRules.domainIsFrameworkFree(BASE).check(classes);
     }

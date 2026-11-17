@@ -5,7 +5,11 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
+import com.tngtech.archunit.lang.syntax.ArchRuleDefinition;
 import com.tngtech.archunit.library.dependencies.SlicesRuleDefinition;
 import java.util.ArrayList;
 import java.util.List;
@@ -195,6 +199,38 @@ final class ArchitectureRules {
                 .should()
                 .dependOnClassesThat()
                 .resideInAPackage(base + "." + SEED + "..")
+                .allowEmptyShould(true);
+    }
+
+    /**
+     * AD-5: an application service that writes through a repository must also use AuditTrail, unless
+     * it is marked AuditedByCaller because the calling operation records the single entry.
+     */
+    static ArchRule writingServicesDependOnAuditTrail(String base) {
+        ArchCondition<JavaClass> auditsItsWrites =
+                new ArchCondition<>("depend on AuditTrail when writing through a repository") {
+                    @Override
+                    public void check(JavaClass service, ConditionEvents events) {
+                        boolean writes = service.getMethodCallsFromSelf().stream()
+                                .anyMatch(call -> call.getTargetOwner()
+                                                .isAssignableTo("org.springframework.data.repository.Repository")
+                                        && (call.getName().startsWith("save") || call.getName().startsWith("delete")));
+                        boolean audits = service.getDirectDependenciesFromSelf().stream()
+                                .anyMatch(dependency -> dependency
+                                        .getTargetClass()
+                                        .getName()
+                                        .equals(base + ".audit.api.AuditTrail"));
+                        boolean exempt = service.isAnnotatedWith(base + ".audit.api.AuditedByCaller");
+                        if (writes && !audits && !exempt) {
+                            events.add(SimpleConditionEvent.violated(
+                                    service, service.getName() + " writes through a repository without AuditTrail"));
+                        }
+                    }
+                };
+        return ArchRuleDefinition.classes()
+                .that()
+                .resideInAnyPackage(base + ".employees.application..", base + ".compensation.application..")
+                .should(auditsItsWrites)
                 .allowEmptyShould(true);
     }
 
