@@ -1,27 +1,50 @@
 import { TestBed } from '@angular/core/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router, provideRouter } from '@angular/router';
-import { routes } from './app.routes';
+import { vi } from 'vitest';
 import { App } from './app';
+import { AuthService } from './core/auth/auth.service';
+import { AppConfigService } from './core/config/app-config.service';
+import { routes } from './app.routes';
+
+const USER = { id: 'u-1', email: 'priya@acme.example', displayName: 'Priya Nair' };
 
 describe('App shell', () => {
-  async function render() {
+  async function setUp(signedIn: boolean, withRoutes = false) {
     await TestBed.configureTestingModule({
       imports: [App],
-      providers: [provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter(withRoutes ? routes : []),
+        { provide: AppConfigService, useValue: { apiBaseUrl: 'http://api.test/api/v1' } },
+      ],
     }).compileComponents();
+    const auth = TestBed.inject(AuthService);
+    if (signedIn) {
+      auth.establishSession('tok', USER);
+    }
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
-    return fixture.nativeElement as HTMLElement;
+    return { fixture, shell: fixture.nativeElement as HTMLElement, auth };
   }
 
-  it('shows the product name in the toolbar', async () => {
-    const shell = await render();
+  it('shows the product name as the page heading', async () => {
+    const { shell } = await setUp(false);
 
-    expect(shell.querySelector('mat-toolbar')?.textContent).toContain('ACME Salary Management');
+    expect(shell.querySelector('mat-toolbar h1')?.textContent).toContain('ACME Salary Management');
   });
 
-  it('offers navigation to every working area except sign-in', async () => {
-    const shell = await render();
+  it('shows no navigation and no sign-out while signed out', async () => {
+    const { shell } = await setUp(false);
+
+    expect(shell.querySelectorAll('nav a')).toHaveLength(0);
+    expect(shell.textContent).not.toContain('Sign out');
+  });
+
+  it('offers navigation to every working area once signed in', async () => {
+    const { shell } = await setUp(true);
 
     const links = Array.from(shell.querySelectorAll('nav a')).map((a) => ({
       label: a.textContent?.trim(),
@@ -39,15 +62,26 @@ describe('App shell', () => {
     ]);
   });
 
+  it('shows who is signed in and a sign-out button', async () => {
+    const { shell } = await setUp(true);
+
+    expect(shell.querySelector('mat-toolbar')?.textContent).toContain('priya@acme.example');
+    expect(shell.querySelector('button.sign-out')?.textContent).toContain('Sign out');
+  });
+
+  it('signs out when the sign-out button is pressed', async () => {
+    const { shell, auth } = await setUp(true);
+    vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+
+    (shell.querySelector('button.sign-out') as HTMLButtonElement).click();
+
+    expect(auth.isAuthenticated()).toBe(false);
+  });
+
   it('marks only the current page in the navigation', async () => {
-    await TestBed.configureTestingModule({
-      imports: [App],
-      providers: [provideRouter(routes)],
-    }).compileComponents();
-    const fixture = TestBed.createComponent(App);
+    const { fixture, shell } = await setUp(true, true);
     await TestBed.inject(Router).navigateByUrl('/employees');
     await fixture.whenStable();
-    const shell = fixture.nativeElement as HTMLElement;
 
     const current = Array.from(shell.querySelectorAll('nav a[aria-current="page"]')).map((a) =>
       a.textContent?.trim(),
@@ -56,14 +90,8 @@ describe('App shell', () => {
     expect(current).toEqual(['Employees']);
   });
 
-  it('uses the product name as the page heading', async () => {
-    const shell = await render();
-
-    expect(shell.querySelector('h1')?.textContent).toContain('ACME Salary Management');
-  });
-
   it('has a place where the routed page is rendered', async () => {
-    const shell = await render();
+    const { shell } = await setUp(false);
 
     expect(shell.querySelector('router-outlet')).not.toBeNull();
   });
