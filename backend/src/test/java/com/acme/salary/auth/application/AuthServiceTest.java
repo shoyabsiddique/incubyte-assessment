@@ -84,6 +84,12 @@ class AuthServiceTest {
     }
 
     @Test
+    void aPasswordLongerThanBcryptCanUseIsRejectedInsteadOfCrashing() {
+        assertThatThrownBy(() -> service.login("priya@acme.example", "a".repeat(100)))
+                .isInstanceOf(InvalidCredentialsException.class);
+    }
+
+    @Test
     void storedPasswordsAreNeverComparedAsPlainText() {
         assertThat(priya.getPasswordHash()).startsWith("$2").doesNotContain("Right-Pass1");
         verify(users, never()).save(org.mockito.ArgumentMatchers.any());
