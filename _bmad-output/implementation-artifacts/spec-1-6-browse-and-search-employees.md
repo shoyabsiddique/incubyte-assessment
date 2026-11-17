@@ -2,7 +2,7 @@
 title: 'Story 1.6: Browse and search employees'
 type: 'feature'
 created: '2026-11-18'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: '81180aa7e85e66e315e2cb7fc65a594cad2c318e'
