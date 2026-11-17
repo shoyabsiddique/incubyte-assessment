@@ -2,7 +2,7 @@
 title: 'Story 1.3: Money and exchange-rate conversion'
 type: 'feature'
 created: '2026-11-18'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: '0486d3633fa54faf16a62bad5d634c73b063372f'
