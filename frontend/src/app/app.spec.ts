@@ -90,6 +90,18 @@ describe('App shell', () => {
     expect(current).toEqual(['Employees']);
   });
 
+  it('keeps Employees highlighted while an individual employee is open', async () => {
+    const { fixture, shell } = await setUp(true, true);
+    await TestBed.inject(Router).navigateByUrl('/employees/e1b2c3d4-0000-4000-8000-000000000001');
+    await fixture.whenStable();
+
+    const current = Array.from(shell.querySelectorAll('nav a[aria-current="page"]')).map((a) =>
+      a.textContent?.trim(),
+    );
+
+    expect(current).toEqual(['Employees']);
+  });
+
   it('has a place where the routed page is rendered', async () => {
     const { shell } = await setUp(false);
 

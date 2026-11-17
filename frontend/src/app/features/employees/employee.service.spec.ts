@@ -90,4 +90,16 @@ describe('EmployeeService', () => {
 
     expect(http.expectOne(`${API}/employees/filters`).request.method).toBe('GET');
   });
+
+  it('loads one employee by id', () => {
+    service.get('abc-123').subscribe();
+
+    expect(http.expectOne(`${API}/employees/abc-123`).request.method).toBe('GET');
+  });
+
+  it('loads the salary history of an employee', () => {
+    service.salaryHistory('abc-123').subscribe();
+
+    expect(http.expectOne(`${API}/employees/abc-123/salary-history`).request.method).toBe('GET');
+  });
 });

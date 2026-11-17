@@ -111,4 +111,30 @@ describe('app routes', () => {
 
     expect(page.querySelector('h2')?.textContent).toContain('Page not found');
   });
+
+  describe('the employee detail route', () => {
+    it('is a lazy route', () => {
+      const route = routes.find((r) => r.path === 'employees/:id');
+
+      expect(route?.loadComponent).toBeTypeOf('function');
+      expect(route?.canActivate).toBeDefined();
+    });
+
+    it('opens the detail page for a signed-in user and sets the tab title', async () => {
+      signIn();
+
+      const page = await open('/employees/e1b2c3d4-0000-4000-8000-000000000001');
+
+      expect(page.querySelector('h2')?.textContent).toContain('Employee');
+      expect(document.title).toBe('Employee | ACME Salary Management');
+    });
+
+    it('sends a signed-out visitor to sign in and remembers the page', async () => {
+      await open('/employees/e1b2c3d4-0000-4000-8000-000000000001');
+
+      expect(TestBed.inject(Router).url).toBe(
+        '/auth?returnUrl=%2Femployees%2Fe1b2c3d4-0000-4000-8000-000000000001',
+      );
+    });
+  });
 });
