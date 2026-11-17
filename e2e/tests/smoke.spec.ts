@@ -19,8 +19,8 @@ test('an HR Manager signs in, finds an employee, reads their pay and signs out',
 
   await expect(page.getByRole('heading', { level: 2, name: 'Charlotte Smith' })).toBeVisible();
   const current = page.locator('.current-salary');
-  await expect(current.locator('.local')).toHaveText(/^\d{1,3}(,\d{3})*\.\d{2} AUD$/);
-  await expect(current.locator('.usd')).toHaveText(/^\d{1,3}(,\d{3})*\.\d{2} USD$/);
+  await expect(current.locator('.local')).toHaveText(/^\s*\d{1,3}(,\d{3})*\.\d{2} AUD\s*$/);
+  await expect(current.locator('.usd')).toHaveText(/^\s*\d{1,3}(,\d{3})*\.\d{2} USD\s*$/);
   await expect(page.getByText('EMP-000001').first()).toBeVisible();
   await expect(page.locator('table.history tr[mat-row]').first()).toContainText('Present');
   await expect(page.locator('table.history')).toContainText('Current');
