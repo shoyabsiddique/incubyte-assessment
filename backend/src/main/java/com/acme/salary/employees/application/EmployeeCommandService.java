@@ -5,7 +5,10 @@ import com.acme.salary.audit.api.AuditEvent;
 import com.acme.salary.audit.api.AuditOperation;
 import com.acme.salary.audit.api.AuditTrail;
 import com.acme.salary.compensation.api.SalaryOpening;
+import com.acme.salary.employees.domain.EmployeeUpdate;
+import com.acme.salary.employees.domain.FieldDiff;
 import com.acme.salary.employees.domain.NewEmployee;
+import com.acme.salary.employees.domain.ProfileInput;
 import com.acme.salary.employees.persistence.EmployeeEntity;
 import com.acme.salary.employees.persistence.EmployeeIdAllocator;
 import com.acme.salary.employees.persistence.EmployeeRepository;
@@ -13,6 +16,7 @@ import com.acme.salary.shared.domain.Actor;
 import com.acme.salary.shared.domain.DomainException;
 import com.acme.salary.shared.domain.ErrorKind;
 import com.acme.salary.shared.domain.Money;
+import java.util.Map;
 import java.util.UUID;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -59,6 +63,33 @@ public class EmployeeCommandService {
                 null,
                 EmployeeAuditFields.of(employee, salary.displayMap(), newEmployee.salaryEffectiveStart().toString())));
         return employee.getId();
+    }
+
+    /** Applies an edit. Changing nothing writes nothing: no new version and no audit entry. */
+    @Transactional
+    public void update(Actor actor, UUID id, ProfileInput input, Long expectedVersion) {
+        EmployeeEntity employee = employees.findById(id).orElseThrow(EmployeeCommandService::notFound);
+        EmployeeUpdate update = EmployeeUpdate.parse(input, expectedVersion);
+        if (employee.getVersion() != update.version()) {
+            throw new DomainException(
+                    ErrorKind.CONFLICT, "CONCURRENT_MODIFICATION", "The employee was changed by someone else; reload it and try again");
+        }
+        if (employees.existsByWorkEmailIgnoreCaseAndIdNot(update.profile().workEmail(), id)) {
+            throw duplicateEmail();
+        }
+        Map<String, Object> before = EmployeeAuditFields.of(employee);
+        employee.applyProfile(update.profile());
+        FieldDiff changes = FieldDiff.between(before, EmployeeAuditFields.of(employee));
+        if (changes.isEmpty()) {
+            return;
+        }
+        saveUnique(employee);
+        audit.record(new AuditEvent(
+                actor.userId(), actor.email(), AuditEntityType.EMPLOYEE, id, id, AuditOperation.UPDATE, changes.before(), changes.after()));
+    }
+
+    static DomainException notFound() {
+        return new DomainException(ErrorKind.NOT_FOUND, "EMPLOYEE_NOT_FOUND", "There is no employee with this id");
     }
 
     private void saveUnique(EmployeeEntity employee) {
