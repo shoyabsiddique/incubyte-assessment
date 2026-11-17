@@ -1,0 +1,76 @@
+:host {
+  display: block;
+  padding: 16px 24px;
+}
+
+h2 {
+  margin: 8px 0 16px;
+}
+
+h3 {
+  margin: 24px 0 8px;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+
+dt {
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+dd {
+  margin: 2px 0 0;
+  font-weight: 500;
+}
+
+.current-salary p {
+  margin: 0;
+}
+
+.current-salary .local {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.current-salary .usd {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.note {
+  margin: 0 0 8px;
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.85rem;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+}
+
+.badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font-size: 0.8rem;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.message {
+  padding: 16px 0;
+}

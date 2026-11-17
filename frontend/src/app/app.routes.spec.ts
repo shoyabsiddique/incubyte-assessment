@@ -125,7 +125,7 @@ describe('app routes', () => {
 
       const page = await open('/employees/e1b2c3d4-0000-4000-8000-000000000001');
 
-      expect(page.querySelector('h2')?.textContent).toContain('Employee');
+      expect(page.querySelector('a.back')).not.toBeNull();
       expect(document.title).toBe('Employee | ACME Salary Management');
     });
 

@@ -81,7 +81,7 @@ describe('EmployeeDetailPage', () => {
     fixture.detectChanges();
   }
 
-  async function loadEverything(employee: unknown = EMPLOYEE, history: unknown[] = HISTORY) {
+  async function loadEverything(employee: object = EMPLOYEE, history: object[] = HISTORY) {
     http.expectOne(`${API}/employees/${ID}`).flush(employee);
     http.expectOne(`${API}/employees/${ID}/salary-history`).flush(history);
     await settle();

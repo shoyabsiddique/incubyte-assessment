@@ -26,6 +26,15 @@ export interface EmployeeSummary {
   salaryUsd: Money | null;
 }
 
+export interface SalaryRecord {
+  id: string;
+  amount: Money;
+  amountUsd: Money;
+  effectiveStart: string;
+  effectiveEnd: string | null;
+  current: boolean;
+}
+
 export interface EmployeePage {
   items: EmployeeSummary[];
   page: number;
@@ -81,6 +90,16 @@ export class EmployeeService {
       }
     }
     return this.http.get<EmployeePage>(`${this.config.apiBaseUrl}/employees`, { params });
+  }
+
+  get(id: string): Observable<EmployeeSummary> {
+    return this.http.get<EmployeeSummary>(`${this.config.apiBaseUrl}/employees/${id}`);
+  }
+
+  salaryHistory(id: string): Observable<SalaryRecord[]> {
+    return this.http.get<SalaryRecord[]>(
+      `${this.config.apiBaseUrl}/employees/${id}/salary-history`,
+    );
   }
 
   filters(): Observable<FilterOptions> {
