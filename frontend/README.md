@@ -7,6 +7,7 @@ Angular 22 single-page app with Angular Material. Pages are standalone component
 | Install dependencies | `npm ci` |
 | Run the dev server | `npm start` |
 | Unit tests (once) | `npx ng test --watch=false` |
+| Check formatting | `npm run format:check` (fix with `npm run format`) |
 | Production build | `npx ng build` |
 
 Requires Node 24. Business calculations never happen here: all numbers come from the API.

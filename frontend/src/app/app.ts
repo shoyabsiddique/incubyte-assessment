@@ -3,6 +3,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { APP_NAME } from './app-name';
 
 interface NavItem {
   readonly label: string;
@@ -24,7 +25,7 @@ interface NavItem {
   styleUrl: './app.scss',
 })
 export class App {
-  protected readonly title = 'ACME Salary Management';
+  protected readonly title = APP_NAME;
 
   protected readonly navItems: readonly NavItem[] = [
     { label: 'Dashboard', path: '/dashboard' },

@@ -1,7 +1,18 @@
 :host {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
+}
+
+.toolbar {
+  --mat-toolbar-container-background-color: var(--mat-sys-primary);
+  --mat-toolbar-container-text-color: var(--mat-sys-on-primary);
+}
+
+.app-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 500;
 }
 
 .layout {

@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
+import { routes } from './app.routes';
 import { App } from './app';
 
 describe('App shell', () => {
@@ -36,6 +37,29 @@ describe('App shell', () => {
       { label: 'Audit history', href: '/audit' },
       { label: 'Exchange rates', href: '/exchange-rates' },
     ]);
+  });
+
+  it('marks only the current page in the navigation', async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [provideRouter(routes)],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(App);
+    await TestBed.inject(Router).navigateByUrl('/employees');
+    await fixture.whenStable();
+    const shell = fixture.nativeElement as HTMLElement;
+
+    const current = Array.from(shell.querySelectorAll('nav a[aria-current="page"]')).map((a) =>
+      a.textContent?.trim(),
+    );
+
+    expect(current).toEqual(['Employees']);
+  });
+
+  it('uses the product name as the page heading', async () => {
+    const shell = await render();
+
+    expect(shell.querySelector('h1')?.textContent).toContain('ACME Salary Management');
   });
 
   it('has a place where the routed page is rendered', async () => {

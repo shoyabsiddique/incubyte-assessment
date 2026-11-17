@@ -10,12 +10,14 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseded runs of a branch are cancelled, but a run on main always finishes.
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 jobs:
   backend-unit:
     name: Backend unit tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: backend
@@ -32,6 +34,7 @@ jobs:
   backend-integration:
     name: Backend integration tests (Testcontainers MariaDB)
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: backend
@@ -48,6 +51,7 @@ jobs:
   frontend:
     name: Frontend tests and production build
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     defaults:
       run:
         working-directory: frontend
@@ -59,6 +63,8 @@ jobs:
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      - name: Formatting
+        run: npm run format:check
       - name: Unit tests
         run: npx ng test --watch=false
       - name: Production build

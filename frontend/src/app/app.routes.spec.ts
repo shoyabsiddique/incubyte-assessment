@@ -40,6 +40,20 @@ describe('app routes', () => {
     });
   }
 
+  for (const feature of FEATURES) {
+    it(`sets the browser tab title for /${feature.path}`, async () => {
+      await open(`/${feature.path}`);
+
+      expect(document.title).toBe(`${feature.heading} | ACME Salary Management`);
+    });
+  }
+
+  it('shows the not-found view for unknown paths below a known page', async () => {
+    const page = await open('/employees/123/unknown');
+
+    expect(page.querySelector('h2')?.textContent).toContain('Page not found');
+  });
+
   it('redirects the root to the dashboard', async () => {
     const page = await open('/');
 

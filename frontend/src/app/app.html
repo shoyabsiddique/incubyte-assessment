@@ -1,5 +1,5 @@
-<mat-toolbar color="primary">
-  <span>{{ title }}</span>
+<mat-toolbar class="toolbar">
+  <h1 class="app-title">{{ title }}</h1>
 </mat-toolbar>
 
 <mat-sidenav-container class="layout">
@@ -7,7 +7,14 @@
     <nav aria-label="Main navigation">
       <mat-nav-list>
         @for (item of navItems; track item.path) {
-          <a mat-list-item [routerLink]="item.path" routerLinkActive="active" #link="routerLinkActive" [activated]="link.isActive">
+          <a
+            mat-list-item
+            [routerLink]="item.path"
+            routerLinkActive
+            ariaCurrentWhenActive="page"
+            #link="routerLinkActive"
+            [activated]="link.isActive"
+          >
             {{ item.label }}
           </a>
         }
