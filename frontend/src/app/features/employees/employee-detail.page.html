@@ -24,13 +24,13 @@
       <div class="heading">
         <h2>{{ person.firstName }} {{ person.lastName }}</h2>
         @if (!editing()) {
-          <button mat-stroked-button class="edit" type="button" (click)="editing.set(true)">
+          <button mat-stroked-button class="edit" type="button" (click)="startEditing()">
             Edit profile
           </button>
         }
       </div>
 
-      <mat-tab-group>
+      <mat-tab-group [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)">
         <mat-tab label="Details">
           @if (editing()) {
             <app-employee-form

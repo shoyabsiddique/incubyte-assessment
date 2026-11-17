@@ -65,7 +65,12 @@ public record EmployeeDraft(
             return null;
         }
         try {
-            return LocalDate.parse(value.trim());
+            LocalDate parsed = LocalDate.parse(value.trim());
+            if (parsed.getYear() < 1900 || parsed.getYear() > 2100) {
+                errors.add(new FieldError(field, "must be a date between 1900 and 2100"));
+                return null;
+            }
+            return parsed;
         } catch (DateTimeParseException invalid) {
             errors.add(new FieldError(field, "must be a real date written as yyyy-mm-dd"));
             return null;

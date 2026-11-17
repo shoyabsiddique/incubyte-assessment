@@ -58,6 +58,7 @@ class AuditQueryTest {
         assertCode(() -> AuditQuery.of("-1", null, null, null, null, null), "INVALID_PAGE");
         assertCode(() -> AuditQuery.of("x", null, null, null, null, null), "INVALID_PAGE");
         assertCode(() -> AuditQuery.of(null, "0", null, null, null, null), "INVALID_PAGE");
+        assertCode(() -> AuditQuery.of("2147483647", null, null, null, null, null), "INVALID_PAGE");
         assertCode(() -> AuditQuery.of(null, "101", null, null, null, null), "PAGE_SIZE_TOO_LARGE");
         assertCode(() -> AuditQuery.of(null, null, "not-a-uuid", null, null, null), "INVALID_FILTER");
         assertCode(() -> AuditQuery.of(null, null, null, "SALARY", null, null), "INVALID_FILTER");

@@ -275,6 +275,20 @@ describe('EmployeeDetailPage', () => {
     expect(page.querySelector('.profile')?.textContent).toContain('Staff Engineer');
   });
 
+  it('switches back to the details tab when editing starts from the audit tab', async () => {
+    await loadEverything();
+    (page.querySelectorAll('[role="tab"]')[1] as HTMLElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    (page.querySelector('button.edit') as HTMLButtonElement).click();
+    await settle();
+    await settle();
+
+    expect(page.querySelector('.mat-mdc-tab-body-active app-employee-form')).not.toBeNull();
+    expect(page.querySelector('app-employee-form')).not.toBeNull();
+  });
+
   it('has an audit history tab for this employee', async () => {
     await loadEverything();
 

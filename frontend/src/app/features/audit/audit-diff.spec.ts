@@ -68,6 +68,23 @@ describe('describeChanges', () => {
     expect(changes[0]).toEqual({ field: 'Effective end', before: null, after: '2026-05-31' });
   });
 
+  it('leaves out fields that did not change', () => {
+    const changes = describeChanges(
+      entry({
+        before: { city: 'Sydney', status: 'ACTIVE' },
+        after: { city: 'Sydney', status: 'ON_LEAVE' },
+      }),
+    );
+
+    expect(changes.map((c) => c.field)).toEqual(['Status']);
+  });
+
+  it('does not rewrite free text that happens to be upper case', () => {
+    const changes = describeChanges(entry({ before: null, after: { department: 'DEVOPS' } }));
+
+    expect(changes[0].after).toBe('DEVOPS');
+  });
+
   it('has nothing to show when there is no payload', () => {
     expect(describeChanges(entry({}))).toEqual([]);
   });

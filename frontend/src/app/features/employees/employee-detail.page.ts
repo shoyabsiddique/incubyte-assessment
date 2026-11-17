@@ -44,6 +44,12 @@ export class EmployeeDetailPage {
   protected readonly employee = signal<EmployeeSummary | null>(null);
   protected readonly history = signal<SalaryRecord[]>([]);
   protected readonly editing = signal(false);
+  protected readonly tab = signal(0);
+
+  protected startEditing(): void {
+    this.tab.set(0);
+    this.editing.set(true);
+  }
 
   constructor() {
     this.requests

@@ -97,7 +97,11 @@ public class EmployeeCommandService {
             employees.saveAndFlush(employee);
         } catch (DataIntegrityViolationException raced) {
             // Two requests with the same email passed the check together; the unique key decides.
-            throw duplicateEmail();
+            String cause = String.valueOf(raced.getMostSpecificCause().getMessage());
+            if (cause.contains("work_email")) {
+                throw duplicateEmail();
+            }
+            throw raced;
         }
     }
 

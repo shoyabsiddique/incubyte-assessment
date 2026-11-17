@@ -77,6 +77,15 @@ class EmployeeDraftTest {
     }
 
     @Test
+    void rejectsDatesOutsideAnySaneRange() {
+        for (String date : new String[] {"+99999-01-01", "1800-01-01", "2500-01-01"}) {
+            ProfileInput far = new ProfileInput("A", "L", "a@b.co", "T", "D", "INDIA", "C", "FULL_TIME", date, "ACTIVE");
+
+            assertThat(failedFields(() -> EmployeeDraft.parse(far))).as(date).containsExactly("hireDate");
+        }
+    }
+
+    @Test
     void rejectsAnImpossibleHireDate() {
         ProfileInput impossible = new ProfileInput(
                 "A", "L", "a@b.co", "T", "D", "INDIA", "C", "FULL_TIME", "2024-02-31", "ACTIVE");

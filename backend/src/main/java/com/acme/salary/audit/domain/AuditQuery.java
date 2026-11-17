@@ -25,12 +25,13 @@ public record AuditQuery(
 
     public static final int DEFAULT_SIZE = 20;
     public static final int MAXIMUM_SIZE = 100;
+    public static final int MAXIMUM_PAGE = 1_000_000;
 
     public static AuditQuery of(String page, String size, String userId, String entityType, String from, String to) {
         int pageNumber = page == null || page.isBlank() ? 0 : whole(page, "page");
         int pageSize = size == null || size.isBlank() ? DEFAULT_SIZE : whole(size, "size");
-        if (pageNumber < 0) {
-            throw invalid("INVALID_PAGE", "page must not be negative");
+        if (pageNumber < 0 || pageNumber > MAXIMUM_PAGE) {
+            throw invalid("INVALID_PAGE", "page must be between 0 and " + MAXIMUM_PAGE);
         }
         if (pageSize < 1) {
             throw invalid("INVALID_PAGE", "size must be at least 1");

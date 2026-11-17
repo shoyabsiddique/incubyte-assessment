@@ -147,6 +147,25 @@ describe('EmployeeFormComponent', () => {
       expect(saved).toEqual([]);
     });
 
+    it('lets the user submit again after fixing a different field than the one the server flagged', async () => {
+      fillValidNewEmployee();
+      await submit();
+      http.expectOne(`${API}/employees`).flush(
+        {
+          code: 'VALIDATION_FAILED',
+          errors: [{ field: 'salaryEffectiveStart', message: 'is before the hire date' }],
+        },
+        { status: 400, statusText: 'Bad Request' },
+      );
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      type('hireDate', '2023-01-01');
+      await submit();
+
+      expect(http.expectOne(`${API}/employees`).request.body.hireDate).toBe('2023-01-01');
+    });
+
     it('shows a duplicate email next to the email field', async () => {
       fillValidNewEmployee();
       await submit();
