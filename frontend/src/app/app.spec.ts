@@ -1,24 +1,46 @@
 import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 import { App } from './app';
 
-describe('App', () => {
-  beforeEach(async () => {
+describe('App shell', () => {
+  async function render() {
     await TestBed.configureTestingModule({
       imports: [App],
-    })
-      .compileComponents();
-  });
-
-  it('should create the app', () => {
-    const fixture = TestBed.createComponent(App);
-    const app = fixture.componentInstance;
-    expect(app).toBeTruthy();
-  });
-
-  it('should render title', async () => {
+      providers: [provideRouter([])],
+    }).compileComponents();
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, frontend');
+    return fixture.nativeElement as HTMLElement;
+  }
+
+  it('shows the product name in the toolbar', async () => {
+    const shell = await render();
+
+    expect(shell.querySelector('mat-toolbar')?.textContent).toContain('ACME Salary Management');
+  });
+
+  it('offers navigation to every working area except sign-in', async () => {
+    const shell = await render();
+
+    const links = Array.from(shell.querySelectorAll('nav a')).map((a) => ({
+      label: a.textContent?.trim(),
+      href: a.getAttribute('href'),
+    }));
+
+    expect(links).toEqual([
+      { label: 'Dashboard', href: '/dashboard' },
+      { label: 'Employees', href: '/employees' },
+      { label: 'Compensation', href: '/compensation' },
+      { label: 'Anomalies', href: '/anomalies' },
+      { label: 'Salary simulator', href: '/simulator' },
+      { label: 'Audit history', href: '/audit' },
+      { label: 'Exchange rates', href: '/exchange-rates' },
+    ]);
+  });
+
+  it('has a place where the routed page is rendered', async () => {
+    const shell = await render();
+
+    expect(shell.querySelector('router-outlet')).not.toBeNull();
   });
 });
