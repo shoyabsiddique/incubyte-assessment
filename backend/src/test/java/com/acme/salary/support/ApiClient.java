@@ -56,6 +56,10 @@ public final class ApiClient {
         return send("PUT", path, body, true);
     }
 
+    public Reply withToken(String method, String path, String body) throws Exception {
+        return send(method, path, body, true);
+    }
+
     public Reply withoutToken(String method, String path, String body) throws Exception {
         return send(method, path, body, false);
     }
