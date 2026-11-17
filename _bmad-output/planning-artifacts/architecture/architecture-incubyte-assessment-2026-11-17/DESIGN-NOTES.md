@@ -12,7 +12,7 @@ A web app for ACME's HR Managers to manage salaries for 10,000 employees across 
 flowchart LR
   user["HR Manager"] --> spa["Angular SPA\n(static hosting)"]
   spa -- "REST /api/v1 + JWT" --> api["Spring Boot API"]
-  api --> db[("PostgreSQL")]
+  api --> db[("MariaDB/MySQL on Hostinger")]
 ```
 
 Two deployables, one database. The API is a **modular monolith**: six feature modules (employees, compensation, analytics, simulator, auth, audit), each split into `web`, `application`, `domain` and `persistence`. The business rules in `domain` are plain Java.
@@ -29,7 +29,8 @@ Two deployables, one database. The API is a **modular monolith**: six feature mo
 | Money | `BigDecimal`, `NUMERIC(19,4)`, USD computed at read time | Store USD alongside | One source of truth; editing a rate restates every report. Cost: conversion on every read (cheap). |
 | Salary history | Append-and-close revisions | Overwrite the amount | Preserves history and makes audit meaningful. Cost: slightly more complex writes and queries (current = range covers today). |
 | Anomaly rule | >20% from peer-group median of USD equivalents, group of 5+ | z-score; original-currency comparison | Explainable to HR. USD is used because an employee's country can change while their salary currency stays, so a peer group can briefly mix currencies. |
-| DB testing | Testcontainers PostgreSQL, no H2 | H2 fallback | Same engine as production; the schema uses an exclusion constraint, jsonb and a view that H2 cannot run, so an H2 fallback would hide real failures. Cost: needs Docker locally. |
+| Database | Hostinger MariaDB/MySQL (existing hosting) | PostgreSQL on Azure | Reuses hosting already available. Cost: no exclusion constraints (overlap prevented by optimistic locking), remote access from Render needs IP allow-listing, and the cross-provider network adds latency. |
+| DB testing | Testcontainers with the same engine as Hostinger, no H2 | H2 fallback | Same engine as production; H2 differs enough to hide real failures. Cost: needs Docker locally. |
 
 ## Module boundaries
 
@@ -44,7 +45,7 @@ erDiagram
   EXCHANGE_RATE ||--o{ COMPENSATION_RECORD : "converts"
 ```
 
-Employee profile and salary are separate tables so a salary change never rewrites the profile. Compensation records carry effective start/end dates; the one covering today is current. A database exclusion constraint forbids overlapping ranges, so two simultaneous revisions cannot leave two current salaries.
+Employee profile and salary are separate tables so a salary change never rewrites the profile. Compensation records carry effective start/end dates; the one covering today is current. Optimistic locking on the latest record means two simultaneous revisions cannot leave two current salaries (the second fails with a 409).
 
 ## The salary revision flow (the heart of the system)
 
@@ -55,7 +56,7 @@ sequenceDiagram
   participant S as Compensation service
   participant D as Domain: revise()
   participant A as AuditTrail
-  participant DB as PostgreSQL
+  participant DB as MariaDB/MySQL
   UI->>C: POST /api/v1/employees/{id}/salary-revisions
   C->>S: command + userId from JWT
   Note over S,DB: one @Transactional
@@ -68,26 +69,26 @@ sequenceDiagram
   C-->>UI: 201 + DTO
 ```
 
-If the audit insert fails, the whole transaction rolls back and the salary does not change. An integration test proves this against a real PostgreSQL.
+If the audit insert fails, the whole transaction rolls back and the salary does not change. An integration test proves this against a real MariaDB/MySQL container.
 
 ## Testing strategy
 
 - **Domain unit tests** (the bulk): no Spring, no database, run in milliseconds. Cover revision, median/anomaly, USD conversion, rounding and the simulator.
 - **Architecture test** (ArchUnit): fails the build if `domain` imports Spring or JPA, or one module reaches another's internals.
-- **Persistence integration tests** (Testcontainers PostgreSQL): Flyway migrations, revision transactions, audit rollback, repository queries.
+- **Persistence integration tests** (Testcontainers, same engine as Hostinger): Flyway migrations, revision transactions, audit rollback, repository queries.
 - **Frontend**: component and service tests, plus a Playwright smoke test for login, employee search and a salary simulation.
 - Test-first: failing tests are committed before the implementation, so the history shows the approach.
 
 ## Performance considerations
 
 - 10,000 rows: lists are paginated and filtered on the server; analytics read one narrow projection and compute in memory.
-- Seeding: deterministic, idempotent and batched, targeting under a minute; run as a one-off command, including against Azure.
+- Seeding: deterministic, idempotent and batched, targeting under a minute; run as a one-off command.
 - Indexes on employee search/filter columns and on `(employee_id, effective_start)`.
 - Revisit: caching and SQL aggregation if profiling shows a bottleneck.
 
 ## Delivery and operations
 
-GitHub Actions builds and tests the backend (including Testcontainers) and frontend on every push, then deploys `main` to Azure: Static Web Apps (SPA), App Service (API), PostgreSQL Flexible Server. Render/Netlify are the fallback. Configuration is through environment variables and Spring profiles; `.env.example` is committed, secrets are not. Observability stays practical: Actuator health/info, structured JSON logs and a correlation ID per request.
+GitHub Actions builds and tests the backend (including Testcontainers) and frontend on every push, then deploys `main` once everything is green: the API as a Docker service on Render, the SPA on static hosting, with the database on Hostinger MariaDB/MySQL. The Render outbound IPs must be allow-listed for remote MySQL access. Configuration is through environment variables and Spring profiles; `.env.example` is committed, secrets are not. Observability stays practical: Actuator health/info, structured JSON logs and a correlation ID per request. The free Render tier sleeps and cold-starts slowly, so the 500 ms target applies to a warm instance. If the remote database latency hurts, the first fix is an in-memory cache of the analytics projection.
 
 ## First milestone
 

@@ -4,7 +4,7 @@ type: architecture-spine
 purpose: build-substrate
 altitude: initiative
 paradigm: 'modular monolith, package-by-feature, with a framework-free domain core'
-scope: 'Whole system: Spring Boot REST API, PostgreSQL, Angular SPA, CI/CD and Azure deployment'
+scope: 'Whole system: Spring Boot REST API, MariaDB/MySQL, Angular SPA, CI/CD and deployment (API on Render, database on Hostinger)'
 status: final
 created: '2026-11-17'
 updated: '2026-11-17'
@@ -65,12 +65,12 @@ flowchart BT
 ### AD-3 — Money, rates and rounding
 - **Binds:** FR-4, FR-5, FR-7, FR-9, FR-10, FR-11, FR-12
 - **Prevents:** float errors; two USD figures for one salary; modules defining their own conversion.
-- **Rule:** `BigDecimal` only, via the single `shared.Money` type and one conversion function. Salaries are `NUMERIC(19,4)` plus an ISO-4217 code; original amount and currency are the source of truth; USD is computed at read time and never stored. Exchange rates are `NUMERIC(19,8)`, strictly greater than 0, USD fixed at 1 and not editable. Each request loads one **rate snapshot** and uses it throughout. A missing rate fails the request (never skipped). Calculations use unrounded values with `MathContext.DECIMAL128`; `Rounding` applies HALF_UP to 2 decimal places for presentation only. Median of an even-sized group is the exact mean of the two middle values. Sorting or ranking by salary (FR-2, FR-8) uses USD equivalent.
+- **Rule:** `BigDecimal` only, via the single `shared.Money` type and one conversion function. Salaries are `DECIMAL(19,4)` plus an ISO-4217 code; original amount and currency are the source of truth; USD is computed at read time and never stored. Exchange rates are `DECIMAL(19,8)`, strictly greater than 0, USD fixed at 1 and not editable. Each request loads one **rate snapshot** and uses it throughout. A missing rate fails the request (never skipped). Calculations use unrounded values with `MathContext.DECIMAL128`; `Rounding` applies HALF_UP to 2 decimal places for presentation only. Median of an even-sized group is the exact mean of the two middle values. Sorting or ranking by salary (FR-2, FR-8) uses USD equivalent.
 
 ### AD-4 — Salary history is append-and-close, never overwrite
 - **Binds:** FR-3, FR-5, FR-6, FR-12
 - **Prevents:** lost history; two "current" salaries; concurrent edits leaving overlapping records.
-- **Rule:** The only way to change a salary is the domain operation `revise(latestRecord, newAmount, effectiveStart)`. It requires `effectiveStart` strictly after the latest record's start, closes that record with `effective_end = effectiveStart − 1 day`, and inserts the new record with `effective_end = NULL` (the open record is the one with a null end; no sentinel dates). No code path updates `amount` on an existing record. **Current** = the record whose range covers today, where today is the date of the injected `Clock` in UTC. Database constraints: unique `(employee_id, effective_start)`, `effective_end >= effective_start`, and a PostgreSQL exclusion constraint (`btree_gist`) forbidding overlapping ranges per employee, so concurrent revisions fail with a 409 instead of corrupting history. The revision currency is always the latest record's currency.
+- **Rule:** The only way to change a salary is the domain operation `revise(latestRecord, newAmount, effectiveStart)`. It requires `effectiveStart` strictly after the latest record's start, closes that record with `effective_end = effectiveStart − 1 day`, and inserts the new record with `effective_end = NULL` (the open record is the one with a null end; no sentinel dates). No code path updates `amount` on an existing record. **Current** = the record whose range covers today, where today is the date of the injected `Clock` in UTC. Database constraints: unique `(employee_id, effective_start)` and `CHECK (effective_end >= effective_start)`. MySQL/MariaDB has no exclusion constraint, so overlap is prevented by the revise operation closing the latest record under optimistic locking (`@Version` on `compensation_record`): two concurrent revisions both try to close the same record and the second fails with a 409 instead of corrupting history. An integration test proves it. The revision currency is always the latest record's currency.
 
 ### AD-5 — Audit is explicit, transactional and uniform `[ADOPTED]`
 - **Binds:** FR-4, FR-5, FR-6, FR-9
@@ -80,7 +80,7 @@ flowchart BT
 ### AD-6 — Analytics from one read model, computed in the domain `[ADOPTED]`
 - **Binds:** FR-7, FR-8, FR-10, FR-11
 - **Prevents:** analytics, anomalies and the simulator disagreeing; rule logic split between SQL and Java; modules fighting over a cross-module join.
-- **Rule:** The `analytics` module owns a read-only database view `v_current_salary` (created by migration) joining active Employees with their Current Compensation Record, and the single projection query over it (country, department, job title, employee ids, amount, currency). This view is the only sanctioned cross-module table read; `simulator` consumes `analytics.api`. "Active" means employment status ACTIVE (not ON_LEAVE or TERMINATED). All statistics, medians, peer-group flags and simulations are computed in the domain layer from that projection and one rate snapshot. Peer group key = country + department + job title (normalized, case-insensitive). Anomaly rule: flag when strictly more than 20% above or below the group median of USD-equivalent salaries, only for groups of at least 5. SQL aggregation or caching only after profiling shows a need.
+- **Rule:** The `analytics` module owns a read-only database view `v_active_compensation` (created by migration) joining active Employees with their Compensation Records, and the single projection query over it, filtered to Current records by the `Clock` date passed as a parameter (never `CURDATE()`), returning country, department, job title, employee ids, amount and currency. This view is the only sanctioned cross-module table read; `simulator` consumes `analytics.api`. "Active" means employment status ACTIVE (not ON_LEAVE or TERMINATED). All statistics, medians, peer-group flags and simulations are computed in the domain layer from that projection and one rate snapshot. Peer group key = country + department + job title (normalized, case-insensitive). Anomaly rule: flag when strictly more than 20% above or below the group median of USD-equivalent salaries, only for groups of at least 5. SQL aggregation or caching only after profiling shows a need. Because the API and database are on different providers, the first sanctioned optimisation is an in-memory cache of the projection, invalidated on every write (single API instance).
 
 ### AD-7 — Exchange Rates
 - **Binds:** FR-9, FR-7, FR-11
@@ -105,24 +105,24 @@ flowchart BT
 ### AD-11 — Reference data, seed and environments
 - **Binds:** FR-12, operations
 - **Prevents:** schema drift; secrets in the repo; a seed that bypasses invariants silently; an irreproducible demo.
-- **Rule:** Flyway migrations are the only schema change path and run at API startup (`spring.jpa.hibernate.ddl-auto=validate`). Reference data (supported currencies and initial exchange rates) is a Flyway migration. HR accounts and the 10,000 Employees come from a separate **seed runner**: a Spring profile `seed` run as a one-off command (locally, and in Azure via a manual workflow), idempotent (does nothing if employees exist), using a fixed random seed, a fixed base date and generated UUIDs derived from the seed so output is reproducible, with batched inserts. The seed writes through repositories but is the single sanctioned bypass of AD-4 and AD-5: it creates baseline history and no audit entries, and SM-2 applies to application-made revisions. Environments: `local`, `test` (CI), `prod`, selected by Spring profile. Config and secrets come from environment variables (Azure App Settings, GitHub secrets); `.env.example` is committed; the app refuses to start in `prod` without a JWT signing key of at least 256 bits. CORS allows only the configured frontend origin.
+- **Rule:** Flyway migrations are the only schema change path and run at API startup (`spring.jpa.hibernate.ddl-auto=validate`). Reference data (supported currencies and initial exchange rates) is a Flyway migration. HR accounts and the 10,000 Employees come from a separate **seed runner**: a Spring profile `seed` run as a one-off command from a developer machine whose IP is on the hosted database's remote-access list, idempotent (does nothing if employees exist), using a fixed random seed, a fixed base date and generated UUIDs derived from the seed so output is reproducible, with batched inserts (driver batch rewriting enabled). The connection pool is capped at 5 (shared MySQL connection limits) and TLS to the database is required if the host supports it. The seed writes through repositories but is the single sanctioned bypass of AD-4 and AD-5: it creates baseline history and no audit entries, and SM-2 applies to application-made revisions. Environments: `local`, `test` (CI), `prod`, selected by Spring profile. Config and secrets come from environment variables (Render environment variables, GitHub secrets); `.env.example` is committed; the app refuses to start in `prod` without a JWT signing key of at least 256 bits. CORS allows only the configured frontend origin.
 
 ### AD-12 — Delivery and operations
 - **Binds:** operations, NFRs
-- **Prevents:** deploys of untested code; ungoverned environments.
-- **Rule:** GitHub Actions on every push: backend build, domain unit tests, Testcontainers integration tests, frontend tests and production build. Deploy of `main` runs only after all of those pass, and a Playwright smoke test (login, employee search, simulation) runs in CI against the built app before deploy. Hosting: Azure Static Web Apps (SPA, calling the API directly with CORS), Azure App Service (API), Azure Database for PostgreSQL Flexible Server; Render/Netlify are fallbacks. App Service health check uses `/actuator/health`; `/actuator/info` is exposed; logs are structured JSON with a correlation ID on every request and log line. Azure resources are created by hand following the README for v1 (infrastructure as code is deferred). The 500 ms NFR is measured on the deployed tier, so the tier is recorded in the README.
+- **Prevents:** deploys of untested code; ungoverned environments; surprise outages from the free tier.
+- **Rule:** GitHub Actions on every push: backend build, domain unit tests, Testcontainers integration tests, frontend tests and production build. Deploy of `main` runs only after all of those pass, and a Playwright smoke test (login, employee search, simulation) runs in CI against the built app before deploy. Hosting: the API runs as a Docker web service on Render, the SPA on static hosting `[ASSUMPTION: Netlify; Hostinger static hosting is the alternative]`, and the database is the Hostinger-hosted MariaDB/MySQL, reached remotely with the Render outbound IP ranges allow-listed in hPanel `[ASSUMPTION: confirm Remote MySQL is available on the plan]`. Health check uses `/actuator/health`; `/actuator/info` is exposed; logs are structured JSON with a correlation ID on every request and log line. Resources are created by hand following the README for v1. The 500 ms NFR applies to a warm instance; the README states that the free Render tier sleeps and cold-starts slowly, and that a paid tier or a keep-alive ping avoids that for demos.
 
 ### AD-13 — Test-first, fast by default `[ADOPTED]`
 - **Binds:** all
 - **Prevents:** a slow, flaky suite; untested rules.
-- **Rule:** Domain unit tests need no database or Spring context and are the bulk of the suite. Persistence integration tests use Testcontainers PostgreSQL, the authoritative database environment, and cover Flyway migrations, revision transactions and the overlap constraint, audit rollback and repository queries. The schema uses PostgreSQL-specific features (exclusion constraint, jsonb, views), so there is no H2 fallback: local development uses Docker (Testcontainers or `docker compose` Postgres). Tests are written before implementation and committed in small steps.
+- **Rule:** Domain unit tests need no database or Spring context and are the bulk of the suite. Persistence integration tests use Testcontainers with the same engine and version as the Hostinger database, the authoritative database environment, and cover Flyway migrations, revision transactions and the concurrent-revision conflict, audit rollback and repository queries. Migrations stay within the MySQL/MariaDB subset the host supports (no privileged features). There is no H2 fallback: local development uses Docker (Testcontainers or `docker compose`). Tests are written before implementation and committed in small steps.
 
 ## Consistency Conventions
 
 | Concern | Convention |
 | --- | --- |
 | Naming | `com.acme.salary.<module>.{api,web,application,domain,persistence}`; DTOs end in `Request`/`Response`; Angular files by feature folder |
-| Data & formats | UUID ids; ISO dates; ISO-4217 currency; money object with decimal-string amount; Problem Details with `code` |
+| Data & formats | UUID ids (stored as `CHAR(36)`); ISO dates; ISO-4217 currency; money object with decimal-string amount; Problem Details with `code` |
 | Reference values | Country is a shared enum (with its currency); employment status ∈ {ACTIVE, ON_LEAVE, TERMINATED}; department and job title are free text, trimmed with whitespace collapsed, grouped case-insensitively |
 | State & cross-cutting | One shared exception handler; correlation ID header on every request and log line; structured JSON logs; user ID from the principal only; time only via `Clock` |
 | Validation | Bean Validation at the web edge; domain invariants in domain classes; database constraints as the last line |
@@ -135,8 +135,8 @@ flowchart BT
 | Java | 21 LTS (Boot 4 supports 17+) |
 | Spring Boot | 4.1.x (latest stable at last check; stay on 4.1 for the build) with `spring-boot-starter-flyway` (Boot 4 needs it for Flyway) |
 | Gradle | wrapper, current stable that Boot 4.1 supports |
-| PostgreSQL | 18, pinned everywhere (Testcontainers image, Azure server, local compose) |
-| Flyway, Testcontainers | managed by the Spring Boot BOM; Testcontainers 2.x module names (`testcontainers-postgresql`) |
+| MariaDB/MySQL | the engine and version Hostinger runs, read from hPanel and pinned in the Testcontainers image and local compose `[OPEN: confirm engine and version]` |
+| Flyway, Testcontainers | managed by the Spring Boot BOM; Testcontainers 2.x module names (`testcontainers-mariadb` or `testcontainers-mysql`, matching the engine) and `flyway-mysql` |
 | JUnit, AssertJ, Mockito | managed by the Spring Boot BOM (JUnit major version as managed; confirm at scaffold) |
 | ArchUnit | not BOM-managed; pin explicitly at scaffold (latest 1.4.x) |
 | Angular | 22 |
@@ -149,12 +149,12 @@ flowchart BT
 
 ```mermaid
 flowchart LR
-  user["HR Manager browser"] --> spa["Angular SPA\nAzure Static Web Apps"]
-  spa -- "HTTPS /api/v1 + JWT, CORS-restricted" --> api["Spring Boot API\nAzure App Service"]
-  api --> db[("PostgreSQL 18\nAzure Flexible Server")]
+  user["HR Manager browser"] --> spa["Angular SPA\nstatic hosting"]
+  spa -- "HTTPS /api/v1 + JWT, CORS-restricted" --> api["Spring Boot API\nRender (Docker)"]
+  api -- "remote MySQL, TLS, IP allow-list" --> db[("MariaDB/MySQL\nHostinger")]
   gh["GitHub Actions"] -- "tests green, then deploy main" --> spa
   gh -- "tests green, then deploy main" --> api
-  seed["seed runner (one-off)"] --> db
+  seed["seed runner (one-off, from dev machine)"] --> db
 ```
 
 ```mermaid
@@ -166,10 +166,10 @@ erDiagram
   EMPLOYEE { uuid id string employee_id UK string work_email UK string country string department string job_title string status int version }
   COMPENSATION_RECORD { uuid id uuid employee_id numeric amount string currency date effective_start date effective_end }
   EXCHANGE_RATE { string currency PK numeric rate_to_usd int version }
-  AUDIT_ENTRY { uuid id uuid user_id string entity_type string entity_id uuid subject_employee_id string operation jsonb before jsonb after timestamp at }
+  AUDIT_ENTRY { uuid id uuid user_id string entity_type string entity_id uuid subject_employee_id string operation json before json after timestamp at }
 ```
 
-`v_current_salary` (read-only view, owned by `analytics`) joins active `EMPLOYEE` with the `COMPENSATION_RECORD` whose range covers today.
+`v_active_compensation` (read-only view, owned by `analytics`) joins active `EMPLOYEE` with its `COMPENSATION_RECORD` rows; the query keeps the record whose range covers today's `Clock` date.
 
 ```text
 repo/
@@ -200,9 +200,10 @@ repo/
 
 - Caching and SQL aggregation: wait for profiling evidence (AD-6).
 - Refresh tokens and token revocation: revisit when sessions must outlive an hour.
-- Infrastructure as code (Bicep/Terraform): README steps for v1.
+- Infrastructure as code: README steps for v1.
+- Moving the database next to the API if remote latency or IP allow-listing proves unworkable.
 - OpenAPI-generated Angular client: hand-written typed DTOs matching AD-9 shapes for v1.
 - Role-based permissions, public sign-up, bulk Excel import, exchange-rate history: PRD non-goals.
 - External monitoring and alerting: Actuator health/info and structured logs only.
-- Backups, scaling and high availability: Azure managed defaults.
+- Backups, scaling and high availability: host-managed defaults (Render, Hostinger).
 - Employee relocation (changing country together with a new currency and salary): v1 only edits the country field.

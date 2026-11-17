@@ -133,7 +133,7 @@ A script creates demo HR Manager accounts, Exchange Rates and 10,000 Employees w
 
 ## 5. Non-Functional Requirements
 
-- **Performance:** list, search and analytics responses feel instant (target under 500 ms at 10,000 Employees on the deployed instance); the seed script completes in under a minute.
+- **Performance:** list, search and analytics responses feel instant (target under 500 ms at 10,000 Employees on a warm deployed instance); the seed script completes in under a minute.
 - **Correctness:** monetary values use exact decimal types, never floating point.
 - **Quality:** core logic (revision, audit, USD conversion, anomaly rule, simulator) is covered by fast, deterministic unit tests, written test-first.
 - **Security:** hashed passwords, authenticated API, server-side validation, no sensitive personal data stored.
