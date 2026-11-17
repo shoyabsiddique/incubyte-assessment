@@ -10,7 +10,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface CompensationRecordRepository extends JpaRepository<CompensationRecordEntity, UUID> {
 
-    @Query("select r from CompensationRecordEntity r where r.employeeId in :ids "
+    /** Projection query: thousands of rows are read cheaply, with no entities kept in memory. */
+    @Query("select new com.acme.salary.compensation.persistence.CurrentSalaryRow(r.employeeId, r.amount, r.currency) "
+            + "from CompensationRecordEntity r where r.employeeId in :ids "
             + "and r.effectiveStart <= :today and (r.effectiveEnd is null or r.effectiveEnd >= :today)")
-    List<CompensationRecordEntity> findCurrent(@Param("ids") Collection<UUID> ids, @Param("today") LocalDate today);
+    List<CurrentSalaryRow> findCurrent(@Param("ids") Collection<UUID> ids, @Param("today") LocalDate today);
 }

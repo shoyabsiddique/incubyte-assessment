@@ -2,7 +2,7 @@ package com.acme.salary.compensation.application;
 
 import com.acme.salary.compensation.api.CurrentSalaryQuery;
 import com.acme.salary.compensation.api.ExchangeRateQuery;
-import com.acme.salary.compensation.persistence.CompensationRecordEntity;
+import com.acme.salary.compensation.persistence.CurrentSalaryRow;
 import com.acme.salary.compensation.persistence.CompensationRecordRepository;
 import com.acme.salary.shared.domain.ExchangeRates;
 import com.acme.salary.shared.domain.Money;
@@ -44,10 +44,8 @@ public class CurrentSalaryService implements CurrentSalaryQuery {
         Map<UUID, Money> salaries = new HashMap<>();
         for (int from = 0; from < ids.size(); from += CHUNK_SIZE) {
             List<UUID> chunk = ids.subList(from, Math.min(from + CHUNK_SIZE, ids.size()));
-            for (CompensationRecordEntity record : records.findCurrent(chunk, today)) {
-                salaries.putIfAbsent(
-                        record.getEmployeeId(),
-                        Money.of(record.getAmount(), Currency.getInstance(record.getCurrency())));
+            for (CurrentSalaryRow row : records.findCurrent(chunk, today)) {
+                salaries.putIfAbsent(row.employeeId(), Money.of(row.amount(), Currency.getInstance(row.currency())));
             }
         }
         return salaries;

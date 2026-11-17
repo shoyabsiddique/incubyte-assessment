@@ -2,7 +2,7 @@
 title: 'Story 1.6: Browse and search employees'
 type: 'feature'
 created: '2026-11-18'
-status: 'in-progress'
+status: 'in-review'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: '81180aa7e85e66e315e2cb7fc65a594cad2c318e'
@@ -53,10 +53,10 @@ context:
 ## Tasks & Acceptance
 
 **Execution:**
-- [ ] Backend unit tests first for `DirectoryQuery` parsing and validation, the search-token and wildcard escaping, then `EmployeeDirectoryIT` over HTTP on seeded data -- test-first
-- [ ] `compensation.api` salary queries and their application service and repository -- no cross-module table reads
-- [ ] `employees` repository with specification, directory service, controller and filters endpoint -- the API
-- [ ] Frontend specs first, then service, table component, filters, states, route wiring -- the screen
+- [x] Backend unit tests first for `DirectoryQuery` parsing and validation, the search-token and wildcard escaping, then `EmployeeDirectoryIT` over HTTP on seeded data -- test-first
+- [x] `compensation.api` salary queries and their application service and repository -- no cross-module table reads
+- [x] `employees` repository with specification, directory service, controller and filters endpoint -- the API
+- [x] Frontend specs first, then service, table component, filters, states, route wiring -- the screen
 
 **Acceptance Criteria:**
 - Given the seeded data, when the matrix scenarios run over HTTP, then all pass and warm responses stay under 500 ms.
