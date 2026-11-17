@@ -2,7 +2,7 @@
 title: 'Story 1.5: Seed 10,000 employees'
 type: 'feature'
 created: '2026-11-18'
-status: 'in-review'
+status: 'done'
 route: 'dispatch'
 review_loop_iteration: 0
 baseline_commit: '40c871ededd7b3bc594ea0052d9d852112130166'
