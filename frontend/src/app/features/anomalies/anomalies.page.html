@@ -1,0 +1,115 @@
+<h2>Potential anomalies for HR review</h2>
+<p class="rule">
+  These are active employees paid more than 20% above or below the median of their peer group (same
+  country, department and job title), compared in USD. Only groups of at least 5 people are
+  considered. A flag is a prompt to look closer, not a finding that pay is unfair.
+</p>
+
+<div class="controls">
+  <label>
+    Country
+    <select name="country" (change)="setFilter('country', $any($event.target).value)">
+      <option value="">All countries</option>
+      @for (country of options()?.countries ?? []; track country.code) {
+        <option [value]="country.code">{{ country.name }}</option>
+      }
+    </select>
+  </label>
+  <label>
+    Department
+    <select name="department" (change)="setFilter('department', $any($event.target).value)">
+      <option value="">All departments</option>
+      @for (department of options()?.departments ?? []; track department) {
+        <option [value]="department">{{ department }}</option>
+      }
+    </select>
+  </label>
+  <label>
+    Direction
+    <select name="direction" (change)="setFilter('direction', $any($event.target).value)">
+      <option value="">Above and below</option>
+      <option value="above">Above the median</option>
+      <option value="below">Below the median</option>
+    </select>
+  </label>
+</div>
+
+@switch (state()) {
+  @case ('loading') {
+    <mat-progress-bar
+      mode="indeterminate"
+      aria-label="Loading potential anomalies"
+    ></mat-progress-bar>
+  }
+  @case ('error') {
+    <section class="message" role="alert">
+      <h3>Something went wrong</h3>
+      <p>The potential anomalies could not be loaded.</p>
+      <button class="retry" mat-flat-button type="button" (click)="load()">Try again</button>
+    </section>
+  }
+  @case ('ready') {
+    @if (items().length === 0) {
+      <p class="empty">No potential anomalies found for these filters.</p>
+    } @else {
+      <p class="count">{{ totalElements() | number }} found</p>
+      <div class="table-scroll">
+        <table class="anomalies">
+          <thead>
+            <tr>
+              <th>Employee</th>
+              <th>Peer group</th>
+              <th>Salary</th>
+              <th>Salary in USD</th>
+              <th>Peer median (USD)</th>
+              <th>Peers</th>
+              <th>Deviation</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of items(); track item.id) {
+              <tr>
+                <td>
+                  <a [routerLink]="['/employees', item.id]">{{ item.name }}</a>
+                  <span class="meta">{{ item.employeeId }}</span>
+                </td>
+                <td>{{ item.countryName }} · {{ item.department }} · {{ item.jobTitle }}</td>
+                <td>{{ item.salary.amount | number: '1.2-2' }} {{ item.salary.currency }}</td>
+                <td>{{ item.salaryUsd.amount | number: '1.2-2' }} {{ item.salaryUsd.currency }}</td>
+                <td>
+                  {{ item.peerMedianUsd.amount | number: '1.2-2' }}
+                  {{ item.peerMedianUsd.currency }}
+                </td>
+                <td>{{ item.peerGroupSize }}</td>
+                <td class="deviation" [class.above]="item.direction === 'ABOVE'">
+                  {{ signed(item) }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+      <div class="pager">
+        <button
+          mat-stroked-button
+          class="previous"
+          type="button"
+          [disabled]="pageNumber() === 0"
+          (click)="goTo(pageNumber() - 1)"
+        >
+          Previous
+        </button>
+        <span>Page {{ pageNumber() + 1 }} of {{ totalPages() }}</span>
+        <button
+          mat-stroked-button
+          class="next"
+          type="button"
+          [disabled]="pageNumber() + 1 >= totalPages()"
+          (click)="goTo(pageNumber() + 1)"
+        >
+          Next
+        </button>
+      </div>
+    }
+  }
+}

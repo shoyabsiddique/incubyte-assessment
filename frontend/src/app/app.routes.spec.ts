@@ -11,7 +11,7 @@ const FEATURES: ReadonlyArray<{ path: string; heading: string; protectedPage: bo
   { path: 'dashboard', heading: 'Dashboard', protectedPage: true },
   { path: 'employees', heading: 'Employees', protectedPage: true },
   { path: 'compensation', heading: 'Compensation', protectedPage: true },
-  { path: 'anomalies', heading: 'Anomalies', protectedPage: true },
+  { path: 'anomalies', heading: 'Potential anomalies for HR review', protectedPage: true },
   { path: 'simulator', heading: 'Salary simulator', protectedPage: true },
   { path: 'audit', heading: 'Audit history', protectedPage: true },
   { path: 'exchange-rates', heading: 'Exchange rates', protectedPage: true },

@@ -40,7 +40,7 @@ export const routes: Routes = [
   {
     path: 'anomalies',
     canActivate: [authGuard],
-    title: `Anomalies | ${APP_NAME}`,
+    title: `Potential anomalies for HR review | ${APP_NAME}`,
     loadComponent: () => import('./features/anomalies/anomalies.page').then((m) => m.AnomaliesPage),
   },
   {

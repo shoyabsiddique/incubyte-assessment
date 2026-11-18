@@ -14,3 +14,5 @@
 | `GET /analytics/pay-extremes` (all departments) | about 120 ms |
 
 Both are under the 500 ms limit, so no cache was added and Story 4.4 is closed by this record. `AnalyticsIT.recordsHowLongTheAnalyticsEndpointsTakeOnTenThousandEmployees` fails if either exceeds 500 ms, so a regression will show; if it does, add the invalidated in-memory projection cache described in the story.
+
+- Potential anomalies: measured about 83 ms on 10,000 employees (best of five), so no cache is needed (Story 4.4 still closed). Peer group medians use all active employees; filters only narrow the list.
