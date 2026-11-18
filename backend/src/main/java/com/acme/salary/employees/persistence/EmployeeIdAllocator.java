@@ -1,7 +1,5 @@
 package com.acme.salary.employees.persistence;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,24 +11,25 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class EmployeeIdAllocator {
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    private static final String PREFIX = "EMP-";
+
+    private final EmployeeIdSequenceRepository sequence;
+    private final EmployeeRepository employees;
+
+    EmployeeIdAllocator(EmployeeIdSequenceRepository sequence, EmployeeRepository employees) {
+        this.sequence = sequence;
+        this.employees = employees;
+    }
 
     @Transactional(propagation = Propagation.MANDATORY)
     public String next() {
-        long last = ((Number) entityManager
-                        .createNativeQuery("SELECT last_value FROM employee_id_sequence WHERE id = 1 FOR UPDATE")
-                        .getSingleResult())
-                .longValue();
-        long highestUsed = ((Number) entityManager
-                        .createNativeQuery("SELECT COALESCE(MAX(CAST(SUBSTRING(employee_id, 5) AS UNSIGNED)), 0) FROM employee")
-                        .getSingleResult())
-                .longValue();
-        long next = Math.max(last, highestUsed) + 1;
-        entityManager
-                .createNativeQuery("UPDATE employee_id_sequence SET last_value = :next WHERE id = 1")
-                .setParameter("next", next)
-                .executeUpdate();
-        return String.format("EMP-%06d", next);
+        EmployeeIdSequenceEntity row = sequence.lockTheSequence();
+        // IDs are zero-padded, so the highest one in text order is also the highest number.
+        int highestUsed = employees.findFirstByOrderByEmployeeIdDesc()
+                .map(e -> Integer.parseInt(e.getEmployeeId().substring(PREFIX.length())))
+                .orElse(0);
+        int next = Math.max(row.getLastValue(), highestUsed) + 1;
+        row.advanceTo(next);
+        return String.format(PREFIX + "%06d", next);
     }
 }
