@@ -154,3 +154,34 @@ jobs:
             api.log
             ui.log
             e2e/test-results
+
+  docker-image:
+    name: API image builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the API image (multi-stage, production profile)
+        run: docker build -t salary-api:ci backend
+
+  deploy:
+    name: Deploy (main only, after every check is green)
+    # Only a push to main deploys. Pull requests and other branches stop after the checks above.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [backend-unit, backend-integration, frontend, e2e, docker-image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: production
+    steps:
+      - name: Deploy the API on Render
+        env:
+          RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
+        run: |
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then echo "RENDER_DEPLOY_HOOK_URL is not set"; exit 1; fi
+          curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
+      - name: Deploy the frontend on Netlify
+        env:
+          NETLIFY_BUILD_HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
+        run: |
+          if [ -z "$NETLIFY_BUILD_HOOK_URL" ]; then echo "NETLIFY_BUILD_HOOK_URL is not set"; exit 1; fi
+          curl -fsS -X POST "$NETLIFY_BUILD_HOOK_URL"

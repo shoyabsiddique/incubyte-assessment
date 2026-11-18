@@ -140,15 +140,13 @@ describe('SimulatorPage', () => {
     await typePercent('150');
     await run();
 
-    http
-      .expectOne(`${API}/simulations`)
-      .flush(
-        {
-          code: 'VALIDATION_FAILED',
-          errors: [{ field: 'percent', message: 'must be a number from 0 to 100' }],
-        },
-        { status: 400, statusText: 'Bad Request' },
-      );
+    http.expectOne(`${API}/simulations`).flush(
+      {
+        code: 'VALIDATION_FAILED',
+        errors: [{ field: 'percent', message: 'must be a number from 0 to 100' }],
+      },
+      { status: 400, statusText: 'Bad Request' },
+    );
     await settle();
 
     expect(view.textContent).toContain('must be a number from 0 to 100');

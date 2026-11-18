@@ -1,0 +1,24 @@
+# Render blueprint for the API (free plan). Secrets are entered in the Render dashboard, never committed.
+# Auto-deploy is off: the CI pipeline calls the deploy hook only after every check has passed on main.
+services:
+  - type: web
+    name: salary-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /actuator/health
+    autoDeploy: false
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: DB_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false

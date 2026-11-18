@@ -1,0 +1,21 @@
+# Static hosting for the Angular app. Set API_BASE_URL (https://<render-service>.onrender.com/api/v1)
+# in the Netlify site settings; it is written into config.json at build time, not baked into the code.
+[build]
+  base = "frontend"
+  command = "npm ci && node scripts/write-config.mjs && npx ng build"
+  publish = "dist/frontend/browser"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+# Deep links such as /employees/<id> must load the app (also covered by public/_redirects).
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# The API address must never be served from a stale cache.
+[[headers]]
+  for = "/config.json"
+  [headers.values]
+    Cache-Control = "no-cache"
