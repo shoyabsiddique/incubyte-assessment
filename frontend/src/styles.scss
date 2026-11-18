@@ -156,6 +156,7 @@ table.anomalies {
 
 // Feedback blocks.
 .banner {
+  margin: 0 0 12px;
   padding: 8px 12px;
   border-radius: 8px;
   background: var(--mat-sys-error-container);
@@ -163,6 +164,7 @@ table.anomalies {
 }
 
 .notice {
+  margin: 0 0 12px;
   padding: 8px 12px;
   border-radius: 8px;
   background: var(--mat-sys-secondary-container);
@@ -184,4 +186,35 @@ a:focus-visible {
 ::selection {
   background: var(--mat-sys-primary-container);
   color: var(--mat-sys-on-primary-container);
+}
+
+.banner p {
+  margin: 0 0 8px;
+}
+
+// Visible to assistive technology only.
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// A small status tag in a table row: Current is the accent, Scheduled is neutral.
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--mat-sys-primary-container);
+  color: var(--mat-sys-on-primary-container);
+  font: var(--mat-sys-label-medium);
+  white-space: nowrap;
+}
+
+.badge.scheduled {
+  background: transparent;
+  color: var(--mat-sys-on-surface-variant);
+  border: 1px solid var(--mat-sys-outline-variant);
 }
