@@ -56,6 +56,11 @@ public class CompensationRecordEntity {
         return record;
     }
 
+    /** Ends this period on {@code lastDay}; the salary that replaces it starts the next day. */
+    public void closeOn(LocalDate lastDay) {
+        this.effectiveEnd = lastDay;
+    }
+
     public UUID getId() {
         return id;
     }

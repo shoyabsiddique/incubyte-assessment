@@ -27,6 +27,10 @@ public class ExchangeRateEntity {
 
     protected ExchangeRateEntity() {}
 
+    public void changeRate(BigDecimal newRate) {
+        this.rateToUsd = newRate;
+    }
+
     public String getCurrency() {
         return currency;
     }

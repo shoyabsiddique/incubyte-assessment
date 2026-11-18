@@ -8,7 +8,12 @@ public class ValidationFailedException extends DomainException {
     private final transient List<FieldError> errors;
 
     public ValidationFailedException(List<FieldError> errors) {
-        super(ErrorKind.INVALID_INPUT, "VALIDATION_FAILED", "The request has invalid fields");
+        this("VALIDATION_FAILED", errors);
+    }
+
+    /** A validation failure with its own stable code, for a rule the client should recognise. */
+    public ValidationFailedException(String code, List<FieldError> errors) {
+        super(ErrorKind.INVALID_INPUT, code, "The request has invalid fields");
         this.errors = List.copyOf(errors);
     }
 

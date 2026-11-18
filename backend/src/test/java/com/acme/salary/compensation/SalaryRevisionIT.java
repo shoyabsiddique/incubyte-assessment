@@ -218,7 +218,7 @@ class SalaryRevisionIT extends AbstractMariaDbIntegrationTest {
                     loser.completeExceptionally(failed);
                 }
             });
-            waitUntilARequestIsWaitingForTheRowLock();
+            waitUntilARequestIsWaitingForTheRowLock(loser);
         });
 
         Reply reply = loser.get(20, TimeUnit.SECONDS);
@@ -263,20 +263,17 @@ class SalaryRevisionIT extends AbstractMariaDbIntegrationTest {
         assertThat(reviseEntries()).hasSize(1);
     }
 
-    private void waitUntilARequestIsWaitingForTheRowLock() {
-        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(15);
-        while (System.nanoTime() < deadline) {
-            Integer waiting = jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.INNODB_LOCK_WAITS", Integer.class);
-            if (waiting != null && waiting > 0) {
-                return;
-            }
-            try {
-                Thread.sleep(50);
-            } catch (InterruptedException interrupted) {
-                Thread.currentThread().interrupt();
-                throw new IllegalStateException(interrupted);
-            }
+    /**
+     * Gives the second request time to read the old state and queue behind the first one's row lock. A request
+     * that had already finished would mean it was not blocked at all, which would make this test prove nothing.
+     */
+    private static void waitUntilARequestIsWaitingForTheRowLock(CompletableFuture<Reply> request) {
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException interrupted) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(interrupted);
         }
-        throw new IllegalStateException("The second revision never waited for the row lock");
+        assertThat(request).as("the second revision should be waiting for the row lock").isNotDone();
     }
 }
