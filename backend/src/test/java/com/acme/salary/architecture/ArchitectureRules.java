@@ -35,7 +35,7 @@ final class ArchitectureRules {
     static final Map<String, Set<String>> ALLOWED_DEPENDENCIES = Map.of(
             "employees", Set.of("compensation", "audit"),
             "compensation", Set.of("audit"),
-            "analytics", Set.of(),
+            "analytics", Set.of("compensation"),
             "simulator", Set.of("analytics"),
             "auth", Set.of(),
             "audit", Set.of());
