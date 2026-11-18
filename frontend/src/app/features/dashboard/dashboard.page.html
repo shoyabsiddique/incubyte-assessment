@@ -1,0 +1,140 @@
+<h2>Dashboard</h2>
+<p class="intro">
+  How ACME pays its active employees, in US dollars at the current exchange rates. Choose a country
+  to see local-currency figures as well.
+</p>
+
+<div class="controls">
+  <label>
+    Group by
+    <select name="groupBy" (change)="setGroupBy($any($event.target).value)">
+      @for (grouping of groupings; track grouping.value) {
+        <option [value]="grouping.value" [selected]="grouping.value === groupBy()">
+          {{ grouping.label }}
+        </option>
+      }
+    </select>
+  </label>
+  <label>
+    Country
+    <select name="country" (change)="setFilter('country', $any($event.target).value)">
+      <option value="">All countries</option>
+      @for (country of options()?.countries ?? []; track country.code) {
+        <option [value]="country.code">{{ country.name }}</option>
+      }
+    </select>
+  </label>
+  <label>
+    Department
+    <select name="department" (change)="setFilter('department', $any($event.target).value)">
+      <option value="">All departments</option>
+      @for (department of options()?.departments ?? []; track department) {
+        <option [value]="department">{{ department }}</option>
+      }
+    </select>
+  </label>
+  <label>
+    Job title
+    <select name="jobTitle" (change)="setFilter('jobTitle', $any($event.target).value)">
+      <option value="">All job titles</option>
+      @for (title of options()?.jobTitles ?? []; track title) {
+        <option [value]="title">{{ title }}</option>
+      }
+    </select>
+  </label>
+</div>
+
+@switch (state()) {
+  @case ('loading') {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading pay statistics"></mat-progress-bar>
+  }
+  @case ('error') {
+    <section class="message" role="alert">
+      <h3>Something went wrong</h3>
+      <p>The pay statistics could not be loaded.</p>
+      <button class="retry" mat-flat-button type="button" (click)="load()">Try again</button>
+    </section>
+  }
+  @case ('ready') {
+    @if (groups().length === 0) {
+      <p class="empty">No active employees match these filters.</p>
+    } @else {
+      <div class="table-scroll">
+        <table mat-table class="stats" [dataSource]="groups()">
+          <ng-container matColumnDef="group">
+            <th mat-header-cell *matHeaderCellDef>Group</th>
+            <td mat-cell *matCellDef="let g">{{ g.label }}</td>
+          </ng-container>
+          <ng-container matColumnDef="count">
+            <th mat-header-cell *matHeaderCellDef>Employees</th>
+            <td mat-cell *matCellDef="let g">{{ g.usd.count | number }}</td>
+          </ng-container>
+          <ng-container matColumnDef="total">
+            <th mat-header-cell *matHeaderCellDef>Total pay</th>
+            <td mat-cell *matCellDef="let g">
+              {{ g.usd.total.amount | number: '1.2-2' }} {{ g.usd.total.currency }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="average">
+            <th mat-header-cell *matHeaderCellDef>Average</th>
+            <td mat-cell *matCellDef="let g">
+              {{ g.usd.average.amount | number: '1.2-2' }} {{ g.usd.average.currency }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="median">
+            <th mat-header-cell *matHeaderCellDef>Median</th>
+            <td mat-cell *matCellDef="let g">
+              {{ g.usd.median.amount | number: '1.2-2' }} {{ g.usd.median.currency }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="minimum">
+            <th mat-header-cell *matHeaderCellDef>Minimum</th>
+            <td mat-cell *matCellDef="let g">
+              {{ g.usd.minimum.amount | number: '1.2-2' }} {{ g.usd.minimum.currency }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="maximum">
+            <th mat-header-cell *matHeaderCellDef>Maximum</th>
+            <td mat-cell *matCellDef="let g">
+              {{ g.usd.maximum.amount | number: '1.2-2' }} {{ g.usd.maximum.currency }}
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="localAverage">
+            <th mat-header-cell *matHeaderCellDef>Average (local)</th>
+            <td mat-cell *matCellDef="let g">
+              @if (g.local) {
+                {{ g.local.average.amount | number: '1.2-2' }} {{ g.local.average.currency }}
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="localMedian">
+            <th mat-header-cell *matHeaderCellDef>Median (local)</th>
+            <td mat-cell *matCellDef="let g">
+              @if (g.local) {
+                {{ g.local.median.amount | number: '1.2-2' }} {{ g.local.median.currency }}
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="localMinimum">
+            <th mat-header-cell *matHeaderCellDef>Minimum (local)</th>
+            <td mat-cell *matCellDef="let g">
+              @if (g.local) {
+                {{ g.local.minimum.amount | number: '1.2-2' }} {{ g.local.minimum.currency }}
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="localMaximum">
+            <th mat-header-cell *matHeaderCellDef>Maximum (local)</th>
+            <td mat-cell *matCellDef="let g">
+              @if (g.local) {
+                {{ g.local.maximum.amount | number: '1.2-2' }} {{ g.local.maximum.currency }}
+              }
+            </td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="columns()"></tr>
+          <tr mat-row *matRowDef="let row; columns: columns()"></tr>
+        </table>
+      </div>
+    }
+  }
+}

@@ -1,0 +1,83 @@
+<h2>Compensation</h2>
+<p class="intro">
+  The highest- and lowest-paid active employees in each department, ranked by their USD equivalent
+  at the current exchange rates.
+</p>
+
+<div class="controls">
+  <label>
+    Department
+    <select name="department" (change)="choose($any($event.target).value)">
+      <option value="">All departments</option>
+      @for (department of departments(); track department) {
+        <option [value]="department">{{ department }}</option>
+      }
+    </select>
+  </label>
+</div>
+
+@switch (state()) {
+  @case ('loading') {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading the pay extremes"></mat-progress-bar>
+  }
+  @case ('error') {
+    <section class="message" role="alert">
+      <h3>Something went wrong</h3>
+      <p>The pay extremes could not be loaded.</p>
+      <button class="retry" mat-flat-button type="button" (click)="load()">Try again</button>
+    </section>
+  }
+  @case ('ready') {
+    @if (results().length === 0) {
+      <p class="empty">No active employees to show.</p>
+    }
+    @for (result of results(); track result.department) {
+      <article class="department">
+        <h3>{{ result.department }}</h3>
+        <div class="lists">
+          <section class="highest" aria-label="Highest paid">
+            <h4>Highest paid</h4>
+            <ol>
+              @for (person of result.highest; track person.id) {
+                <li>
+                  <a [routerLink]="['/employees', person.id]">{{ person.name }}</a>
+                  <span class="meta">
+                    {{ person.employeeId }} · {{ person.jobTitle }} · {{ person.countryName }}
+                  </span>
+                  <span class="pay">
+                    {{ person.salaryUsd.amount | number: '1.2-2' }} {{ person.salaryUsd.currency }}
+                    <small>
+                      ({{ person.salary.amount | number: '1.2-2' }} {{ person.salary.currency }})
+                    </small>
+                  </span>
+                </li>
+              }
+            </ol>
+          </section>
+          <section class="lowest" aria-label="Lowest paid">
+            <h4>Lowest paid</h4>
+            @if (result.lowest.length === 0) {
+              <p>Everyone in this department is listed as highest paid.</p>
+            }
+            <ol>
+              @for (person of result.lowest; track person.id) {
+                <li>
+                  <a [routerLink]="['/employees', person.id]">{{ person.name }}</a>
+                  <span class="meta">
+                    {{ person.employeeId }} · {{ person.jobTitle }} · {{ person.countryName }}
+                  </span>
+                  <span class="pay">
+                    {{ person.salaryUsd.amount | number: '1.2-2' }} {{ person.salaryUsd.currency }}
+                    <small>
+                      ({{ person.salary.amount | number: '1.2-2' }} {{ person.salary.currency }})
+                    </small>
+                  </span>
+                </li>
+              }
+            </ol>
+          </section>
+        </div>
+      </article>
+    }
+  }
+}
