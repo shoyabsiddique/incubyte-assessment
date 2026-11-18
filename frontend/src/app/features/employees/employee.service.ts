@@ -55,6 +55,11 @@ export interface NewEmployeeInput extends EmployeeProfileInput {
   salaryEffectiveStart: string;
 }
 
+export interface SalaryRevisionInput {
+  amount: string;
+  effectiveStart: string;
+}
+
 export interface EmployeePage {
   items: EmployeeSummary[];
   page: number;
@@ -131,6 +136,14 @@ export class EmployeeService {
       ...input,
       version,
     });
+  }
+
+  /** Gives the employee a new salary from {@code effectiveStart}; the old record is closed the day before. */
+  revise(id: string, input: SalaryRevisionInput): Observable<SalaryRecord> {
+    return this.http.post<SalaryRecord>(
+      `${this.config.apiBaseUrl}/employees/${id}/salary-revisions`,
+      input,
+    );
   }
 
   filters(): Observable<FilterOptions> {

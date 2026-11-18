@@ -297,4 +297,117 @@ describe('EmployeeDetailPage', () => {
     );
     expect(labels).toEqual(['Details', 'Audit history']);
   });
+
+  it('marks a future-dated salary as scheduled instead of present', async () => {
+    const scheduled = {
+      ...HISTORY[0],
+      id: 'r4',
+      effectiveStart: '2099-07-01',
+      current: false,
+    };
+    await loadEverything(EMPLOYEE, [
+      scheduled,
+      { ...HISTORY[0], effectiveEnd: '2099-06-30' },
+      HISTORY[1],
+      HISTORY[2],
+    ]);
+
+    const rows = page.querySelectorAll('table.history tr[mat-row]');
+    expect(rows[0].textContent).toContain('Scheduled');
+    expect(rows[0].textContent).not.toContain('Present');
+    expect(rows[0].textContent).not.toContain('Current');
+  });
+
+  describe('revising the salary', () => {
+    async function openTheForm() {
+      (page.querySelector('button.revise-salary') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+    }
+
+    it('offers to revise the salary and shows the form with the current salary for reference', async () => {
+      await loadEverything();
+
+      await openTheForm();
+
+      const form = page.querySelector('app-salary-revision-form');
+      expect(form).not.toBeNull();
+      expect(form?.querySelector('.reference')?.textContent).toContain('145,700.00 AUD');
+      expect(page.querySelector('button.revise-salary')).toBeNull();
+    });
+
+    it('does not offer a revision to someone with no salary', async () => {
+      await loadEverything({ ...EMPLOYEE, salary: null, salaryUsd: null }, []);
+
+      expect(page.querySelector('button.revise-salary')).toBeNull();
+    });
+
+    it('refreshes the current salary and the history after a revision and says so', async () => {
+      await loadEverything();
+      await openTheForm();
+      const amount = page.querySelector('[formcontrolname="amount"]') as HTMLInputElement;
+      amount.value = '150000';
+      amount.dispatchEvent(new Event('input'));
+      const start = page.querySelector('[formcontrolname="effectiveStart"]') as HTMLInputElement;
+      start.value = '2025-01-01';
+      start.dispatchEvent(new Event('input'));
+
+      (
+        page.querySelector('app-salary-revision-form button[type="submit"]') as HTMLButtonElement
+      ).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      http
+        .expectOne(`${API}/employees/${ID}/salary-revisions`)
+        .flush(
+          { ...HISTORY[0], id: 'r4', effectiveStart: '2025-01-01' },
+          { status: 201, statusText: 'Created' },
+        );
+      await settle();
+      http
+        .expectOne(`${API}/employees/${ID}`)
+        .flush({ ...EMPLOYEE, salary: { amount: '150000.00', currency: 'AUD' } });
+      http.expectOne(`${API}/employees/${ID}/salary-history`).flush([
+        {
+          ...HISTORY[0],
+          id: 'r4',
+          amount: { amount: '150000.00', currency: 'AUD' },
+          effectiveStart: '2025-01-01',
+        },
+        { ...HISTORY[0], current: false, effectiveEnd: '2024-12-31' },
+        HISTORY[1],
+        HISTORY[2],
+      ]);
+      await settle();
+
+      expect(page.querySelector('app-salary-revision-form')).toBeNull();
+      expect(page.querySelector('.current-salary .local')?.textContent).toContain('150,000.00');
+      expect(page.querySelectorAll('table.history tr[mat-row]').length).toBe(4);
+      expect(page.querySelector('.notice')?.textContent).toContain('Salary revised');
+      expect(page.querySelector('[role="progressbar"]')).toBeNull();
+    });
+
+    it('can be cancelled without changing anything', async () => {
+      await loadEverything();
+      await openTheForm();
+
+      (page.querySelector('app-salary-revision-form button.cancel') as HTMLButtonElement).click();
+      await settle();
+
+      expect(page.querySelector('app-salary-revision-form')).toBeNull();
+      expect(page.querySelector('button.revise-salary')).not.toBeNull();
+    });
+
+    it('reloads the latest data when a conflicting revision asks for it', async () => {
+      await loadEverything();
+      await openTheForm();
+      fixture.componentInstance['reloadLatest']();
+      await settle();
+
+      http.expectOne(`${API}/employees/${ID}`);
+      http.expectOne(`${API}/employees/${ID}/salary-history`);
+      expect(page.querySelector('app-salary-revision-form')).toBeNull();
+    });
+  });
 });

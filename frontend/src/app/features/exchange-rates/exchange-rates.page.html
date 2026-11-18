@@ -1,0 +1,100 @@
+<h2>Exchange rates</h2>
+<p class="intro">
+  Each rate is how many US dollars one unit of the currency is worth. USD comparisons across the
+  application use these rates, so a change takes effect everywhere straight away.
+</p>
+
+@switch (state()) {
+  @case ('loading') {
+    <mat-progress-bar
+      mode="indeterminate"
+      aria-label="Loading the exchange rates"
+    ></mat-progress-bar>
+  }
+  @case ('error') {
+    <section class="message" role="alert">
+      <h3>Something went wrong</h3>
+      <p>The exchange rates could not be loaded.</p>
+      <button class="retry" mat-flat-button type="button" (click)="load()">Try again</button>
+    </section>
+  }
+  @case ('ready') {
+    @if (saved()) {
+      <p class="notice" role="status">{{ saved() }}</p>
+    }
+    @if (conflict()) {
+      <div class="banner" role="alert">
+        <p>This rate was changed by someone else while you were editing it.</p>
+        <button mat-stroked-button type="button" class="reload" (click)="reload()">
+          Reload the latest rates
+        </button>
+      </div>
+    }
+    @if (generalError()) {
+      <p class="banner" role="alert">{{ generalError() }}</p>
+    }
+
+    <div class="table-scroll">
+      <table mat-table class="rates" [dataSource]="rates()">
+        <ng-container matColumnDef="currency">
+          <th mat-header-cell *matHeaderCellDef>Currency</th>
+          <td mat-cell *matCellDef="let rate">{{ rate.currency }}</td>
+        </ng-container>
+        <ng-container matColumnDef="rate">
+          <th mat-header-cell *matHeaderCellDef>Rate (USD per 1 unit)</th>
+          <td mat-cell *matCellDef="let rate">
+            @if (editing() === rate.currency) {
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-label>Rate for {{ rate.currency }}</mat-label>
+                <input
+                  matInput
+                  class="rate-input"
+                  inputmode="decimal"
+                  autocomplete="off"
+                  [formControl]="rateControl"
+                  (keydown.enter)="save(rate)"
+                />
+                <mat-error>{{ rateControl.errors?.['server'] ?? 'Rate is required' }}</mat-error>
+              </mat-form-field>
+            } @else {
+              {{ rate.rate }}
+            }
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef>
+            <span class="visually-hidden">Actions</span>
+          </th>
+          <td mat-cell *matCellDef="let rate">
+            @if (!rate.editable) {
+              <span class="fixed">Fixed</span>
+            } @else if (editing() === rate.currency) {
+              <button
+                mat-flat-button
+                class="save"
+                type="button"
+                [disabled]="busy()"
+                (click)="save(rate)"
+              >
+                Save
+              </button>
+              <button mat-button class="cancel" type="button" (click)="cancel()">Cancel</button>
+            } @else {
+              <button
+                mat-stroked-button
+                class="edit"
+                type="button"
+                [attr.aria-label]="'Edit ' + rate.currency + ' rate'"
+                (click)="edit(rate)"
+              >
+                Edit
+              </button>
+            }
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columns"></tr>
+        <tr mat-row *matRowDef="let row; columns: columns"></tr>
+      </table>
+    </div>
+  }
+}

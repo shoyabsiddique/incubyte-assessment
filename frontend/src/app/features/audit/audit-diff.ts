@@ -56,6 +56,8 @@ function format(value: unknown): string | null {
 /** The fields an audit entry changed, each with what it was and what it became. */
 export function describeChanges(entry: AuditEntry): FieldChange[] {
   const after = entry.after ?? entry.before ?? {};
+  // An exchange rate entry names its currency in a field that never changes, so it is shown in the label.
+  const currency = entry.entityType === 'EXCHANGE_RATE' ? (after['currency'] as string) : null;
   return Object.keys(after)
     .filter(
       (field) =>
@@ -63,7 +65,7 @@ export function describeChanges(entry: AuditEntry): FieldChange[] {
         JSON.stringify(entry.before[field]) !== JSON.stringify(entry.after?.[field]),
     )
     .map((field) => ({
-      field: fieldLabel(field),
+      field: currency && field === 'rate' ? `${currency} rate` : fieldLabel(field),
       before: format(entry.before?.[field]),
       after: format(entry.after?.[field]),
     }));

@@ -9,6 +9,7 @@ import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { AuditHistoryComponent } from '../audit/audit-history.component';
 import { EmployeeFormComponent } from './employee-form.component';
+import { SalaryRevisionFormComponent } from './salary-revision-form.component';
 import { BehaviorSubject, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { EmployeeService, EmployeeSummary, SalaryRecord } from './employee.service';
 
@@ -28,6 +29,7 @@ type Outcome = Loaded | 'not-found' | 'error';
     MatTabsModule,
     AuditHistoryComponent,
     EmployeeFormComponent,
+    SalaryRevisionFormComponent,
   ],
   templateUrl: './employee-detail.page.html',
   styleUrl: './employee-detail.page.scss',
@@ -38,6 +40,8 @@ export class EmployeeDetailPage {
   private readonly destroyRef = inject(DestroyRef);
   private readonly requests = new BehaviorSubject<string | null>(null);
   private currentId = '';
+  /** Set for a refresh that should not blank the page, such as after a salary revision. */
+  private quietRefresh = false;
 
   protected readonly columns = ['period', 'amount', 'amountUsd', 'marker'];
   protected readonly state = signal<'loading' | 'ready' | 'not-found' | 'error'>('loading');
@@ -45,6 +49,21 @@ export class EmployeeDetailPage {
   protected readonly history = signal<SalaryRecord[]>([]);
   protected readonly editing = signal(false);
   protected readonly tab = signal(0);
+  protected readonly revising = signal(false);
+  protected readonly notice = signal<string | null>(null);
+
+  protected startRevising(): void {
+    this.tab.set(0);
+    this.notice.set(null);
+    this.revising.set(true);
+  }
+
+  protected onRevised(record: SalaryRecord): void {
+    this.revising.set(false);
+    this.notice.set(`Salary revised: ${record.effectiveStart} onwards.`);
+    this.quietRefresh = true;
+    this.requests.next(this.currentId);
+  }
 
   protected startEditing(): void {
     this.tab.set(0);
@@ -58,7 +77,11 @@ export class EmployeeDetailPage {
           if (id === null) {
             return of<Outcome | null>(null);
           }
-          this.state.set('loading');
+          if (this.quietRefresh) {
+            this.quietRefresh = false;
+          } else {
+            this.state.set('loading');
+          }
           return forkJoin({
             employee: this.service.get(id),
             // A person with no salary records is still a person: show them with an empty history.
@@ -115,6 +138,8 @@ export class EmployeeDetailPage {
 
   protected reloadLatest(): void {
     this.editing.set(false);
+    this.revising.set(false);
+    this.notice.set(null);
     this.retry();
   }
 

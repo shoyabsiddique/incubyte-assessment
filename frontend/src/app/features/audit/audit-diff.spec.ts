@@ -85,6 +85,19 @@ describe('describeChanges', () => {
     expect(changes[0].after).toBe('DEVOPS');
   });
 
+  it('names the currency in an exchange rate change, which is otherwise not shown as changed', () => {
+    const changes = describeChanges(
+      entry({
+        entityType: 'EXCHANGE_RATE',
+        subjectEmployeeId: null,
+        before: { currency: 'INR', rate: '0.012' },
+        after: { currency: 'INR', rate: '0.0125' },
+      }),
+    );
+
+    expect(changes).toEqual([{ field: 'INR rate', before: '0.012', after: '0.0125' }]);
+  });
+
   it('has nothing to show when there is no payload', () => {
     expect(describeChanges(entry({}))).toEqual([]);
   });

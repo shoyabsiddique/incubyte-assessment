@@ -1,0 +1,48 @@
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate class="revision-form">
+  <h3>Revise salary</h3>
+  @if (current(); as salary) {
+    <p class="reference">
+      Current salary: {{ salary.amount | number: '1.2-2' }} {{ salary.currency }}
+    </p>
+  }
+
+  @if (conflict()) {
+    <div class="banner" role="alert">
+      <p>
+        This salary was revised by someone else at the same time. Reload to see the latest salary.
+      </p>
+      <button mat-stroked-button type="button" class="reload" (click)="reload.emit()">
+        Reload the latest data
+      </button>
+    </div>
+  }
+  @if (generalError()) {
+    <p class="banner" role="alert">{{ generalError() }}</p>
+  }
+
+  <div class="grid">
+    <mat-form-field appearance="outline">
+      <mat-label>New annual gross base salary</mat-label>
+      <input matInput inputmode="decimal" formControlName="amount" autocomplete="off" />
+      <mat-hint>
+        Paid in <span class="currency">{{ current()?.currency }}</span>
+      </mat-hint>
+      <mat-error>{{
+        form.controls.amount.errors?.['server'] ?? 'New salary is required'
+      }}</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline">
+      <mat-label>Effective date</mat-label>
+      <input matInput type="date" formControlName="effectiveStart" />
+      <mat-error>{{
+        form.controls.effectiveStart.errors?.['server'] ?? 'Effective date is required'
+      }}</mat-error>
+    </mat-form-field>
+  </div>
+
+  <div class="actions">
+    <button mat-flat-button type="submit" [disabled]="busy()">Save revision</button>
+    <button mat-button type="button" class="cancel" (click)="cancelled.emit()">Cancel</button>
+  </div>
+</form>

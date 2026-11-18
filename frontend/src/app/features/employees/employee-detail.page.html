@@ -84,7 +84,22 @@
           }
 
           <section class="current-salary" aria-label="Current salary">
-            <h3>Current salary</h3>
+            <div class="salary-heading">
+              <h3>Current salary</h3>
+              @if (person.salary && !revising()) {
+                <button
+                  mat-stroked-button
+                  class="revise-salary"
+                  type="button"
+                  (click)="startRevising()"
+                >
+                  Revise salary
+                </button>
+              }
+            </div>
+            @if (notice()) {
+              <p class="notice" role="status">{{ notice() }}</p>
+            }
             @if (person.salary && person.salaryUsd) {
               <p class="local">
                 {{ person.salary.amount | number: '1.2-2' }} {{ person.salary.currency }}
@@ -94,6 +109,15 @@
               </p>
             } @else {
               <p>—</p>
+            }
+            @if (revising()) {
+              <app-salary-revision-form
+                [employeeId]="person.id"
+                [current]="person.salary"
+                (revised)="onRevised($event)"
+                (cancelled)="revising.set(false)"
+                (reload)="reloadLatest()"
+              />
             }
           </section>
 
@@ -111,8 +135,10 @@
                       {{ record.effectiveStart | date: 'mediumDate' }} –
                       @if (record.effectiveEnd) {
                         {{ record.effectiveEnd | date: 'mediumDate' }}
-                      } @else {
+                      } @else if (record.current) {
                         Present
+                      } @else {
+                        Onwards
                       }
                     </td>
                   </ng-container>
@@ -136,6 +162,8 @@
                     <td mat-cell *matCellDef="let record">
                       @if (record.current) {
                         <span class="badge">Current</span>
+                      } @else if (!record.effectiveEnd) {
+                        <span class="badge scheduled">Scheduled</span>
                       }
                     </td>
                   </ng-container>

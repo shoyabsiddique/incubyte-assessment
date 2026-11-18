@@ -40,3 +40,11 @@
 - Format amounts by the currency's own decimals (zero-decimal currencies) and carry the employee name in the tab title.
 - Trim the id route parameter; make integration test data independent of the shared container and the fixed seed.
 
+
+## From Epic 3
+- A mistaken far-future revision (for example dated 2099) can only be superseded by a later date; there is no cancel or undo for a scheduled revision. Consider a "cancel scheduled revision" action, or an upper bound such as one year ahead.
+- Revising the salary of a terminated or on-leave employee is allowed; decide whether terminated employees should be blocked (compensation deliberately does not read employee status, AD-9).
+- An exchange rate edit applies immediately to every USD figure with no sanity check; consider a warning when a rate moves by more than a set percentage, and an effective-dated rate history if past USD figures ever need to be reproducible.
+- The revision audit entry records the new record's fields and the replaced record's amount and start; the closed record's new end date is implied by the new start and is not stored separately.
+- The deterministic lost-race test (`SalaryRevisionIT`) waits three seconds for the second request to queue on the row lock because the test database user has no PROCESS privilege to ask the engine; make it event-driven if that privilege is ever granted to the test user.
+- The routes spec's first lazy-load test can exceed the 5 second default on a cold start (seen once, passes on re-run); raise the timeout for that spec if it recurs.

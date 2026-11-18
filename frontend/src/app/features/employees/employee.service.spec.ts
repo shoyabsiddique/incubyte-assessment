@@ -118,4 +118,12 @@ describe('EmployeeService', () => {
     expect(request.request.method).toBe('PUT');
     expect(request.request.body).toEqual({ firstName: 'Ada', version: 7 });
   });
+
+  it('revises a salary with a POST of the amount and the effective date', () => {
+    service.revise('abc-123', { amount: '150000', effectiveStart: '2025-01-01' }).subscribe();
+
+    const request = http.expectOne(`${API}/employees/abc-123/salary-revisions`);
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ amount: '150000', effectiveStart: '2025-01-01' });
+  });
 });

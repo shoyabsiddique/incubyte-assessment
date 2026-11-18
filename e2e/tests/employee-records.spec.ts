@@ -1,22 +1,5 @@
-import { expect, test, type Page } from '@playwright/test';
-
-const EMAIL = process.env['E2E_EMAIL'] ?? 'priya.nair@acme.example';
-const PASSWORD = process.env['E2E_PASSWORD'] ?? 'LocalDemo#2026';
-
-async function signIn(page: Page) {
-  await page.goto('/');
-  await page.getByLabel('Email').fill(EMAIL);
-  await page.getByLabel('Password').fill(PASSWORD);
-  await page.getByRole('button', { name: 'Sign in' }).click();
-  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
-}
-
-async function choose(page: Page, label: string, option: string) {
-  await page.getByLabel(label).click({ force: true });
-  await expect(page.getByRole('listbox')).toBeVisible();
-  await page.getByRole('option', { name: option, exact: true }).click();
-  await expect(page.getByRole('listbox')).toBeHidden();
-}
+import { expect, test } from '@playwright/test';
+import { EMAIL, choose, signIn } from './helpers';
 
 test('an HR Manager adds an employee, edits them and finds both changes in the audit history', async ({
   page,
