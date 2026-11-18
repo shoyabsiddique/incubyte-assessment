@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
@@ -17,6 +18,9 @@ const FEATURES: ReadonlyArray<{ path: string; heading: string; protectedPage: bo
   { path: 'exchange-rates', heading: 'Exchange rates', protectedPage: true },
   { path: 'auth', heading: 'Sign in', protectedPage: false },
 ];
+
+// The first test to load a lazy route compiles it, which can take longer than the 5 second default.
+vi.setConfig({ testTimeout: 20_000 });
 
 describe('app routes', () => {
   beforeEach(() => {

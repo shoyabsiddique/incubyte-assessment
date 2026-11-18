@@ -10,6 +10,9 @@ import { routes } from './app.routes';
 
 const USER = { id: 'u-1', email: 'priya@acme.example', displayName: 'Priya Nair' };
 
+// The first test to load a lazy route compiles it, which can take longer than the 5 second default.
+vi.setConfig({ testTimeout: 20_000 });
+
 describe('App shell', () => {
   async function setUp(signedIn: boolean, withRoutes = false) {
     await TestBed.configureTestingModule({
