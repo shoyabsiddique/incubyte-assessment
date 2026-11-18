@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { of } from 'rxjs';
 import { Router, provideRouter } from '@angular/router';
 import { vi } from 'vitest';
 import { App } from './app';
@@ -14,13 +16,17 @@ const USER = { id: 'u-1', email: 'priya@acme.example', displayName: 'Priya Nair'
 vi.setConfig({ testTimeout: 20_000 });
 
 describe('App shell', () => {
-  async function setUp(signedIn: boolean, withRoutes = false) {
+  async function setUp(signedIn: boolean, withRoutes = false, narrow = false) {
     await TestBed.configureTestingModule({
       imports: [App],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter(withRoutes ? routes : []),
+        {
+          provide: BreakpointObserver,
+          useValue: { observe: () => of({ matches: narrow, breakpoints: {} }) },
+        },
         { provide: AppConfigService, useValue: { apiBaseUrl: 'http://api.test/api/v1' } },
       ],
     }).compileComponents();
@@ -109,5 +115,42 @@ describe('App shell', () => {
     const { shell } = await setUp(false);
 
     expect(shell.querySelector('router-outlet')).not.toBeNull();
+  });
+  describe('on a narrow screen', () => {
+    it('keeps the navigation out of the way until the menu button is pressed', async () => {
+      const { fixture, shell } = await setUp(true, false, true);
+      fixture.detectChanges();
+
+      const toggle = shell.querySelector('button.menu-toggle') as HTMLButtonElement;
+      expect(toggle).not.toBeNull();
+      expect(toggle.getAttribute('aria-label')).toBe('Open navigation');
+      expect(shell.querySelector('mat-sidenav.mat-drawer-opened')).toBeNull();
+
+      toggle.click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      expect(shell.querySelector('mat-sidenav.mat-drawer-opened')).not.toBeNull();
+    });
+
+    it('closes the navigation after a destination is chosen', async () => {
+      const { fixture, shell } = await setUp(true, true, true);
+      (shell.querySelector('button.menu-toggle') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      (shell.querySelector('nav a[href="/employees"]') as HTMLAnchorElement).click();
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(shell.querySelector('mat-sidenav.mat-drawer-opened')).toBeNull();
+    });
+  });
+
+  it('has no menu button on a wide screen, where the navigation is always shown', async () => {
+    const { shell } = await setUp(true);
+
+    expect(shell.querySelector('button.menu-toggle')).toBeNull();
+    expect(shell.querySelector('mat-sidenav')?.className).toContain('mat-drawer-opened');
   });
 });

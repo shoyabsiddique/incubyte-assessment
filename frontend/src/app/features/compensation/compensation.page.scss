@@ -1,38 +1,10 @@
 :host {
   display: block;
-  padding: 16px 24px;
-}
-
-h2 {
-  margin: 8px 0;
-}
-
-.intro {
-  margin: 0 0 16px;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.controls select {
-  min-width: 220px;
-  padding: 8px;
-  font: inherit;
-  color: var(--mat-sys-on-surface);
-  background: var(--mat-sys-surface);
-  border: 1px solid var(--mat-sys-outline);
-  border-radius: 4px;
-}
-
-.controls label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.85rem;
-  color: var(--mat-sys-on-surface-variant);
-  margin-bottom: 16px;
+  padding: 16px 24px 32px;
 }
 
 .department {
-  margin-bottom: 24px;
+  margin: 24px 0;
 }
 
 .lists {
@@ -55,7 +27,7 @@ li {
 }
 
 .meta {
-  font-size: 0.85rem;
+  font: var(--mat-sys-body-small);
   color: var(--mat-sys-on-surface-variant);
 }
 

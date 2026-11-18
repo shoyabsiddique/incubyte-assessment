@@ -1,5 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { BreakpointObserver } from '@angular/cdk/layout';
+import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -22,6 +26,7 @@ interface NavItem {
     MatSidenavModule,
     MatListModule,
     MatButtonModule,
+    MatIconModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
@@ -30,6 +35,18 @@ interface NavItem {
 export class App {
   protected readonly auth = inject(AuthService);
   protected readonly title = APP_NAME;
+  /** Below this width the navigation becomes a drawer opened from a menu button. */
+  protected readonly narrow = toSignal(
+    inject(BreakpointObserver)
+      .observe('(max-width: 900px)')
+      .pipe(map((state) => state.matches)),
+    { initialValue: false },
+  );
+  protected readonly menuOpen = signal(false);
+
+  protected closeMenu(): void {
+    this.menuOpen.set(false);
+  }
 
   protected readonly navItems: readonly NavItem[] = [
     { label: 'Dashboard', path: '/dashboard' },

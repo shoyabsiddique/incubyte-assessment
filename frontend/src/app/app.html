@@ -1,4 +1,16 @@
 <mat-toolbar class="toolbar">
+  @if (narrow() && auth.isAuthenticated()) {
+    <button
+      mat-icon-button
+      class="menu-toggle"
+      type="button"
+      [attr.aria-label]="menuOpen() ? 'Close navigation' : 'Open navigation'"
+      [attr.aria-expanded]="menuOpen()"
+      (click)="menuOpen.set(!menuOpen())"
+    >
+      <mat-icon>menu</mat-icon>
+    </button>
+  }
   <h1 class="app-title">{{ title }}</h1>
   <span class="spacer"></span>
   @if (auth.user(); as user) {
@@ -9,7 +21,12 @@
 
 <mat-sidenav-container class="layout">
   @if (auth.isAuthenticated()) {
-    <mat-sidenav mode="side" opened class="sidenav">
+    <mat-sidenav
+      class="sidenav"
+      [mode]="narrow() ? 'over' : 'side'"
+      [opened]="narrow() ? menuOpen() : true"
+      (closedStart)="closeMenu()"
+    >
       <nav aria-label="Main navigation">
         <mat-nav-list>
           @for (item of navItems; track item.path) {
@@ -20,6 +37,7 @@
               ariaCurrentWhenActive="page"
               #link="routerLinkActive"
               [activated]="link.isActive"
+              (click)="closeMenu()"
             >
               {{ item.label }}
             </a>

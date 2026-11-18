@@ -1,68 +1,28 @@
 :host {
   display: block;
-  padding: 16px 24px;
+  padding: 16px 24px 32px;
 }
 
-h2 {
-  margin: 8px 0;
-}
-
-.rule {
-  margin: 0 0 16px;
-  max-width: 70ch;
+.count {
+  margin: 0 0 8px;
   color: var(--mat-sys-on-surface-variant);
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.controls label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.85rem;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.controls select {
-  min-width: 180px;
-  padding: 8px;
-  font: inherit;
-  color: var(--mat-sys-on-surface);
-  background: var(--mat-sys-surface);
-  border: 1px solid var(--mat-sys-outline);
-  border-radius: 4px;
-}
-
-.table-scroll {
-  overflow-x: auto;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-th,
-td {
-  padding: 8px 12px;
-  text-align: left;
-  border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
 .meta {
   display: block;
-  font-size: 0.8rem;
+  font: var(--mat-sys-body-small);
   color: var(--mat-sys-on-surface-variant);
 }
 
+// The sign carries the meaning; colour only reinforces it.
 .deviation {
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
+  color: var(--mat-sys-error);
+}
+
+.deviation.above {
+  color: var(--mat-sys-tertiary);
 }
 
 .pager {
@@ -74,4 +34,11 @@ td {
 
 .message {
   padding: 16px 0;
+}
+
+// Salary, USD, median, peers and deviation are figures: right-aligned so they compare down the column.
+th:nth-child(n + 3),
+td:nth-child(n + 3) {
+  text-align: right;
+  white-space: nowrap;
 }

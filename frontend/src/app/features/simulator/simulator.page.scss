@@ -1,57 +1,18 @@
 :host {
   display: block;
-  padding: 16px 24px;
-}
-
-h2 {
-  margin: 8px 0;
-}
-
-.read-only {
-  margin: 0 0 16px;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.controls {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 16px;
-}
-
-.controls label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.85rem;
-  color: var(--mat-sys-on-surface-variant);
-}
-
-.controls input,
-.controls select {
-  min-width: 180px;
-  padding: 8px;
-  font: inherit;
-  color: var(--mat-sys-on-surface);
-  background: var(--mat-sys-surface);
-  border: 1px solid var(--mat-sys-outline);
-  border-radius: 4px;
+  padding: 16px 24px 32px;
 }
 
 .controls button {
-  margin-top: 20px;
+  align-self: flex-end;
 }
 
 .error {
   color: var(--mat-sys-error);
 }
 
-.banner {
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: var(--mat-sys-error-container);
-  color: var(--mat-sys-on-error-container);
+.results {
+  margin-top: 24px;
 }
 
 dl {
@@ -62,12 +23,11 @@ dl {
 }
 
 dt {
-  font-size: 0.85rem;
+  font: var(--mat-sys-label-large);
   color: var(--mat-sys-on-surface-variant);
 }
 
 dd {
   margin: 2px 0 0;
-  font-size: 1.3rem;
-  font-weight: 600;
+  font: var(--mat-sys-headline-small);
 }
