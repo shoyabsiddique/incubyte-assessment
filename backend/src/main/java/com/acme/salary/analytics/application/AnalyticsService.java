@@ -1,6 +1,9 @@
 package com.acme.salary.analytics.application;
 
 import com.acme.salary.analytics.domain.ActiveSalary;
+import com.acme.salary.analytics.domain.Anomaly;
+import com.acme.salary.analytics.domain.AnomalyDetector;
+import com.acme.salary.analytics.domain.Direction;
 import com.acme.salary.analytics.domain.Extremes;
 import com.acme.salary.analytics.domain.GroupBy;
 import com.acme.salary.analytics.domain.GroupStats;
@@ -15,6 +18,7 @@ import com.acme.salary.shared.domain.ExchangeRates;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -29,6 +33,7 @@ public class AnalyticsService {
 
     public static final int DEFAULT_N = 5;
     public static final int MAX_N = 25;
+    public static final int MAX_PAGE_SIZE = 100;
 
     private final ActiveCompensationStore store;
     private final ExchangeRateQuery rates;
@@ -67,6 +72,78 @@ public class AnalyticsService {
             result.add(new DepartmentExtremes(name, extremes));
         });
         return result;
+    }
+
+    /** Potential anomalies for HR review. Peer group medians use everyone; the filters only narrow what is listed. */
+    public AnomalyPage anomalies(
+            String country, String department, String direction, String page, String size, String sort) {
+        int pageNumber = number(page, 0, 0, 1_000_000, "INVALID_PAGE", "INVALID_PAGE");
+        int pageSize = number(size, 20, 1, MAX_PAGE_SIZE, "INVALID_PAGE", "PAGE_SIZE_TOO_LARGE");
+        Comparator<Anomaly> order = order(sort);
+        Optional<Country> countryFilter = country(country);
+        Optional<String> departmentFilter = known(department, "department", store.departments());
+        Optional<Direction> directionFilter = direction == null || direction.isBlank()
+                ? Optional.empty()
+                : Optional.of(Direction.find(direction.trim())
+                        .orElseThrow(() -> invalid("INVALID_FILTER", "direction must be above or below")));
+        List<ActiveSalary> rows = store.findInForce(today(), Optional.empty(), Optional.empty(), Optional.empty());
+        List<Anomaly> matching = AnomalyDetector.detect(rows, rates.snapshot()).stream()
+                .filter(a -> countryFilter.map(c -> a.person().country() == c).orElse(true))
+                .filter(a -> departmentFilter.map(d -> a.person().department().equals(d)).orElse(true))
+                .filter(a -> directionFilter.map(d -> a.direction() == d).orElse(true))
+                .sorted(order)
+                .toList();
+        int from = (int) Math.min((long) pageNumber * pageSize, matching.size());
+        int to = Math.min(from + pageSize, matching.size());
+        int pages = (matching.size() + pageSize - 1) / pageSize;
+        return new AnomalyPage(matching.subList(from, to), pageNumber, pageSize, matching.size(), pages);
+    }
+
+    private static Comparator<Anomaly> order(String sort) {
+        String field = "magnitude";
+        boolean descending = true;
+        if (sort != null && !sort.isBlank()) {
+            String[] parts = sort.trim().split(",", -1);
+            field = parts[0];
+            if (parts.length > 2 || (parts.length == 2 && !parts[1].equals("asc") && !parts[1].equals("desc"))) {
+                throw invalid("INVALID_SORT", "sort must be a field, optionally followed by ,asc or ,desc");
+            }
+            descending = parts.length == 2 ? parts[1].equals("desc") : !field.equals("name") && !field.equals("employeeId");
+        }
+        Comparator<Anomaly> base =
+                switch (field) {
+                    case "magnitude" -> Comparator.comparing((Anomaly a) -> a.deviationPercent().abs());
+                    case "deviation" -> Comparator.comparing(Anomaly::deviationPercent);
+                    case "employeeId" -> Comparator.comparing((Anomaly a) -> a.person().employeeId());
+                    case "name" -> Comparator.comparing((Anomaly a) -> a.person().name().toLowerCase());
+                    case "department" -> Comparator.comparing((Anomaly a) -> a.person().department().toLowerCase());
+                    case "country" -> Comparator.comparing((Anomaly a) -> a.person().country().displayName());
+                    case "salary" -> Comparator.comparing((Anomaly a) -> a.usd().amount());
+                    default -> throw invalid(
+                            "INVALID_SORT",
+                            "sort must be one of magnitude, deviation, employeeId, name, department, country or salary");
+                };
+        Comparator<Anomaly> directed = descending ? base.reversed() : base;
+        return directed.thenComparing(a -> a.person().employeeId());
+    }
+
+    private static int number(String text, int fallback, int min, int max, String badCode, String tooLargeCode) {
+        if (text == null || text.isBlank()) {
+            return fallback;
+        }
+        int value;
+        try {
+            value = Integer.parseInt(text.trim());
+        } catch (NumberFormatException notANumber) {
+            throw invalid(badCode, "page and size must be whole numbers");
+        }
+        if (value < min) {
+            throw invalid(badCode, "page and size are out of range");
+        }
+        if (value > max) {
+            throw invalid(tooLargeCode, "page or size is too large");
+        }
+        return value;
     }
 
     private LocalDate today() {

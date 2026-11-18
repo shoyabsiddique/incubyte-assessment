@@ -44,13 +44,19 @@ public final class SalaryStatistics {
         return result;
     }
 
+    /** The middle value of an ascending list, or the exact mean of the two middle values when the size is even. */
+    static BigDecimal medianOf(List<BigDecimal> sorted) {
+        int size = sorted.size();
+        return size % 2 == 1
+                ? sorted.get(size / 2)
+                : sorted.get(size / 2 - 1).add(sorted.get(size / 2), MoneyMath.CONTEXT).divide(TWO, MoneyMath.CONTEXT);
+    }
+
     private static Stats stats(List<BigDecimal> amounts, Currency currency) {
         List<BigDecimal> sorted = amounts.stream().sorted().toList();
         int size = sorted.size();
         BigDecimal total = sorted.stream().reduce(BigDecimal.ZERO, (a, b) -> a.add(b, MoneyMath.CONTEXT));
-        BigDecimal median = size % 2 == 1
-                ? sorted.get(size / 2)
-                : sorted.get(size / 2 - 1).add(sorted.get(size / 2), MoneyMath.CONTEXT).divide(TWO, MoneyMath.CONTEXT);
+        BigDecimal median = medianOf(sorted);
         return new Stats(
                 size,
                 Money.of(total, currency),
