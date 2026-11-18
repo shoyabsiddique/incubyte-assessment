@@ -1,0 +1,103 @@
+<h2>Salary simulator</h2>
+<p class="read-only">
+  See what a pay increment would cost. This is read-only: it changes no salaries and records
+  nothing.
+</p>
+
+<form class="controls" (ngSubmit)="run()" novalidate>
+  <label>
+    Increment (%)
+    <input
+      name="percent"
+      type="text"
+      inputmode="decimal"
+      autocomplete="off"
+      [value]="percent()"
+      (input)="setPercent($any($event.target).value)"
+    />
+    @if (errors()['percent']) {
+      <span class="error" role="alert">{{ errors()['percent'] }}</span>
+    }
+  </label>
+  <label>
+    Applies to
+    <select name="scope" (change)="setScope($any($event.target).value)">
+      <option value="ORGANIZATION" [selected]="scope() === 'ORGANIZATION'">
+        The whole organisation
+      </option>
+      <option value="COUNTRY" [selected]="scope() === 'COUNTRY'">One country</option>
+      <option value="DEPARTMENT" [selected]="scope() === 'DEPARTMENT'">One department</option>
+    </select>
+  </label>
+  @if (scope() === 'COUNTRY') {
+    <label>
+      Country
+      <select name="value" (change)="setValue($any($event.target).value)">
+        <option value="">Choose a country</option>
+        @for (country of options()?.countries ?? []; track country.code) {
+          <option [value]="country.code">{{ country.name }}</option>
+        }
+      </select>
+      @if (errors()['value']) {
+        <span class="error" role="alert">{{ errors()['value'] }}</span>
+      }
+    </label>
+  }
+  @if (scope() === 'DEPARTMENT') {
+    <label>
+      Department
+      <select name="value" (change)="setValue($any($event.target).value)">
+        <option value="">Choose a department</option>
+        @for (department of options()?.departments ?? []; track department) {
+          <option [value]="department">{{ department }}</option>
+        }
+      </select>
+      @if (errors()['value']) {
+        <span class="error" role="alert">{{ errors()['value'] }}</span>
+      }
+    </label>
+  }
+  <button mat-flat-button class="run" type="button" [disabled]="busy()" (click)="run()">
+    Run simulation
+  </button>
+</form>
+
+@if (busy()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Running the simulation"></mat-progress-bar>
+}
+@if (generalError()) {
+  <p class="banner" role="alert">{{ generalError() }}</p>
+}
+@if (result(); as r) {
+  <section class="results" aria-label="Simulation result">
+    <h3>
+      {{ r.percent }}% increment for
+      {{ r.scope === 'ORGANIZATION' ? 'the whole organisation' : r.value }}
+    </h3>
+    <dl>
+      <div>
+        <dt>Employees in scope</dt>
+        <dd class="employees">{{ r.employees | number }}</dd>
+      </div>
+      <div>
+        <dt>Current annual payroll</dt>
+        <dd class="current">
+          {{ r.currentPayroll.amount | number: '1.2-2' }} {{ r.currentPayroll.currency }}
+        </dd>
+      </div>
+      <div>
+        <dt>Additional projected expenditure</dt>
+        <dd class="additional">
+          {{ r.additionalExpenditure.amount | number: '1.2-2' }}
+          {{ r.additionalExpenditure.currency }}
+        </dd>
+      </div>
+      <div>
+        <dt>Projected annual payroll</dt>
+        <dd class="projected">
+          {{ r.projectedPayroll.amount | number: '1.2-2' }} {{ r.projectedPayroll.currency }}
+        </dd>
+      </div>
+    </dl>
+  </section>
+}

@@ -1,0 +1,73 @@
+:host {
+  display: block;
+  padding: 16px 24px;
+}
+
+h2 {
+  margin: 8px 0;
+}
+
+.read-only {
+  margin: 0 0 16px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.controls label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.controls input,
+.controls select {
+  min-width: 180px;
+  padding: 8px;
+  font: inherit;
+  color: var(--mat-sys-on-surface);
+  background: var(--mat-sys-surface);
+  border: 1px solid var(--mat-sys-outline);
+  border-radius: 4px;
+}
+
+.controls button {
+  margin-top: 20px;
+}
+
+.error {
+  color: var(--mat-sys-error);
+}
+
+.banner {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+dl {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+dt {
+  font-size: 0.85rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+dd {
+  margin: 2px 0 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+}
