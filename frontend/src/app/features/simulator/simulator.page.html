@@ -15,9 +15,11 @@
       [value]="percent()"
       (input)="setPercent($any($event.target).value)"
     />
-    @if (errors()['percent']) {
-      <span class="error" role="alert">{{ errors()['percent'] }}</span>
-    }
+    <span class="slot">
+      @if (errors()['percent']) {
+        <span class="error" role="alert">{{ errors()['percent'] }}</span>
+      }
+    </span>
   </label>
   <label>
     Applies to
@@ -28,6 +30,7 @@
       <option value="COUNTRY" [selected]="scope() === 'COUNTRY'">One country</option>
       <option value="DEPARTMENT" [selected]="scope() === 'DEPARTMENT'">One department</option>
     </select>
+    <span class="slot"></span>
   </label>
   @if (scope() === 'COUNTRY') {
     <label>
@@ -38,9 +41,11 @@
           <option [value]="country.code">{{ country.name }}</option>
         }
       </select>
-      @if (errors()['value']) {
-        <span class="error" role="alert">{{ errors()['value'] }}</span>
-      }
+      <span class="slot">
+        @if (errors()['value']) {
+          <span class="error" role="alert">{{ errors()['value'] }}</span>
+        }
+      </span>
     </label>
   }
   @if (scope() === 'DEPARTMENT') {
@@ -52,14 +57,19 @@
           <option [value]="department">{{ department }}</option>
         }
       </select>
-      @if (errors()['value']) {
-        <span class="error" role="alert">{{ errors()['value'] }}</span>
-      }
+      <span class="slot">
+        @if (errors()['value']) {
+          <span class="error" role="alert">{{ errors()['value'] }}</span>
+        }
+      </span>
     </label>
   }
-  <button mat-flat-button class="run" type="button" [disabled]="busy()" (click)="run()">
-    Run simulation
-  </button>
+  <div class="run-wrap">
+    <button mat-flat-button class="run" type="button" [disabled]="busy()" (click)="run()">
+      Run simulation
+    </button>
+    <span class="slot"></span>
+  </div>
 </form>
 
 @if (busy()) {

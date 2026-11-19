@@ -119,4 +119,42 @@ describe('CompensationPage', () => {
     await settle();
     expect(page.querySelector('section.highest')).not.toBeNull();
   });
+  it('numbers each list from the top', async () => {
+    await load();
+
+    const ranks = Array.from(page.querySelectorAll('section.highest .rank')).map((r) =>
+      r.textContent?.trim(),
+    );
+    expect(ranks).toEqual(['1', '2']);
+  });
+
+  it('draws a bar for each person relative to the best paid in the department', async () => {
+    await load();
+
+    const widths = Array.from(page.querySelectorAll('section.highest .bar-fill')).map((b) =>
+      Math.round(parseFloat((b as HTMLElement).style.width)),
+    );
+    expect(widths).toEqual([100, 89]);
+    const low = page.querySelector('section.lowest .bar-fill') as HTMLElement;
+    expect(Math.round(parseFloat(low.style.width))).toBe(11);
+  });
+
+  it('summarises the department in its heading', async () => {
+    await load();
+
+    const summary = page.querySelector('article.department .summary')?.textContent ?? '';
+    expect(summary).toContain('3 people shown');
+    expect(summary).toContain('90,000.00');
+  });
+
+  it('lets the number of people shown be changed', async () => {
+    await load();
+
+    const select = page.querySelector('select[name="n"]') as HTMLSelectElement;
+    select.value = '10';
+    select.dispatchEvent(new Event('change'));
+    await settle();
+
+    expect(extremesRequest().request.params.get('n')).toBe('10');
+  });
 });

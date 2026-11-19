@@ -3,8 +3,25 @@
   padding: 16px 24px 32px;
 }
 
-.controls button {
-  align-self: flex-end;
+.controls {
+  // Every control sits on one baseline: labels above, a reserved line for errors below.
+  align-items: flex-end;
+}
+
+.slot {
+  display: block;
+  min-height: 20px;
+  font: var(--mat-sys-body-small);
+}
+
+.run-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.run {
+  min-height: 40px;
 }
 
 .error {
@@ -22,12 +39,24 @@ dl {
   margin: 0;
 }
 
+// Each figure is a tile of the same height, so the four read as one aligned row.
+dl > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+}
+
 dt {
   font: var(--mat-sys-label-large);
   color: var(--mat-sys-on-surface-variant);
 }
 
 dd {
-  margin: 2px 0 0;
+  margin: 0;
   font: var(--mat-sys-headline-small);
+  font-variant-numeric: tabular-nums;
 }

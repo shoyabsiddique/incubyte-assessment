@@ -14,6 +14,14 @@
       }
     </select>
   </label>
+  <label>
+    People per list
+    <select name="n" (change)="setCount($any($event.target).value)">
+      @for (option of counts; track option) {
+        <option [value]="option" [selected]="option === count()">{{ option }}</option>
+      }
+    </select>
+  </label>
 </div>
 
 @switch (state()) {
@@ -31,53 +39,79 @@
     @if (results().length === 0) {
       <p class="empty">No active employees to show.</p>
     }
-    @for (result of results(); track result.department) {
-      <article class="department">
-        <h3>{{ result.department }}</h3>
-        <div class="lists">
-          <section class="highest" aria-label="Highest paid">
-            <h4>Highest paid</h4>
-            <ol>
-              @for (person of result.highest; track person.id) {
-                <li>
-                  <a [routerLink]="['/employees', person.id]">{{ person.name }}</a>
-                  <span class="meta">
-                    {{ person.employeeId }} · {{ person.jobTitle }} · {{ person.countryName }}
-                  </span>
-                  <span class="pay">
-                    {{ person.salaryUsd.amount | number: '1.2-2' }} {{ person.salaryUsd.currency }}
-                    <small>
-                      ({{ person.salary.amount | number: '1.2-2' }} {{ person.salary.currency }})
-                    </small>
-                  </span>
-                </li>
+    <div class="departments">
+      @for (result of results(); track result.department) {
+        <article class="department">
+          <header class="department-head">
+            <h3>{{ result.department }}</h3>
+            <p class="summary">
+              {{ shown(result) }} people shown · top {{ top(result).amount | number: '1.2-2' }}
+              {{ top(result).currency }}
+            </p>
+          </header>
+          <div class="lists">
+            <section class="highest" aria-label="Highest paid">
+              <h4>Highest paid</h4>
+              <ol>
+                @for (person of result.highest; track person.id; let i = $index) {
+                  <li>
+                    <span class="rank" aria-hidden="true">{{ i + 1 }}</span>
+                    <div class="who">
+                      <a [routerLink]="['/employees', person.id]">{{ person.name }}</a>
+                      <span class="meta">
+                        {{ person.employeeId }} · {{ person.jobTitle }} · {{ person.countryName }}
+                      </span>
+                    </div>
+                    <div class="pay">
+                      <span class="usd">
+                        {{ person.salaryUsd.amount | number: '1.2-2' }}
+                        {{ person.salaryUsd.currency }}
+                      </span>
+                      <small>
+                        ({{ person.salary.amount | number: '1.2-2' }} {{ person.salary.currency }})
+                      </small>
+                    </div>
+                    <div class="bar" aria-hidden="true">
+                      <div class="bar-fill" [style.width.%]="share(person, result)"></div>
+                    </div>
+                  </li>
+                }
+              </ol>
+            </section>
+            <section class="lowest" aria-label="Lowest paid">
+              <h4>Lowest paid</h4>
+              @if (result.lowest.length === 0) {
+                <p class="note">Everyone in this department is listed as highest paid.</p>
               }
-            </ol>
-          </section>
-          <section class="lowest" aria-label="Lowest paid">
-            <h4>Lowest paid</h4>
-            @if (result.lowest.length === 0) {
-              <p>Everyone in this department is listed as highest paid.</p>
-            }
-            <ol>
-              @for (person of result.lowest; track person.id) {
-                <li>
-                  <a [routerLink]="['/employees', person.id]">{{ person.name }}</a>
-                  <span class="meta">
-                    {{ person.employeeId }} · {{ person.jobTitle }} · {{ person.countryName }}
-                  </span>
-                  <span class="pay">
-                    {{ person.salaryUsd.amount | number: '1.2-2' }} {{ person.salaryUsd.currency }}
-                    <small>
-                      ({{ person.salary.amount | number: '1.2-2' }} {{ person.salary.currency }})
-                    </small>
-                  </span>
-                </li>
-              }
-            </ol>
-          </section>
-        </div>
-      </article>
-    }
+              <ol>
+                @for (person of result.lowest; track person.id; let i = $index) {
+                  <li>
+                    <span class="rank" aria-hidden="true">{{ i + 1 }}</span>
+                    <div class="who">
+                      <a [routerLink]="['/employees', person.id]">{{ person.name }}</a>
+                      <span class="meta">
+                        {{ person.employeeId }} · {{ person.jobTitle }} · {{ person.countryName }}
+                      </span>
+                    </div>
+                    <div class="pay">
+                      <span class="usd">
+                        {{ person.salaryUsd.amount | number: '1.2-2' }}
+                        {{ person.salaryUsd.currency }}
+                      </span>
+                      <small>
+                        ({{ person.salary.amount | number: '1.2-2' }} {{ person.salary.currency }})
+                      </small>
+                    </div>
+                    <div class="bar" aria-hidden="true">
+                      <div class="bar-fill low" [style.width.%]="share(person, result)"></div>
+                    </div>
+                  </li>
+                }
+              </ol>
+            </section>
+          </div>
+        </article>
+      }
+    </div>
   }
 }

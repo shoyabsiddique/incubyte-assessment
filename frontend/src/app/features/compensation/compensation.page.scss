@@ -3,14 +3,56 @@
   padding: 16px 24px 32px;
 }
 
+.departments {
+  display: grid;
+  gap: 16px;
+}
+
+// One department: a bordered tile with its name and a one-line summary, then the two ranked lists.
 .department {
-  margin: 24px 0;
+  padding: 16px;
+  background: var(--mat-sys-surface-container-lowest);
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+}
+
+.department-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 16px;
+  margin-bottom: 12px;
+}
+
+.department-head h3 {
+  margin: 0;
+}
+
+.summary {
+  margin: 0;
+  font: var(--mat-sys-body-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-on-surface-variant);
 }
 
 .lists {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 16px 32px;
+}
+
+h4 {
+  margin: 0 0 4px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  font: var(--mat-sys-label-large);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.note {
+  margin: 8px 0;
+  color: var(--mat-sys-on-surface-variant);
 }
 
 ol {
@@ -19,20 +61,85 @@ ol {
   list-style: none;
 }
 
+// Each person: a rank, who they are, what they earn, and a bar showing how it compares.
 li {
   display: grid;
-  gap: 2px;
-  padding: 8px 0;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-areas:
+    'rank who pay'
+    '. bar bar';
+  align-items: center;
+  gap: 4px 12px;
+  padding: 10px 0;
   border-bottom: 1px solid var(--mat-sys-outline-variant);
 }
 
+li:last-child {
+  border-bottom: 0;
+}
+
+.rank {
+  grid-area: rank;
+  font: var(--mat-sys-label-large);
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-on-surface-variant);
+  text-align: right;
+}
+
+.who {
+  grid-area: who;
+  display: grid;
+  min-width: 0;
+}
+
+.who a {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .meta {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font: var(--mat-sys-body-small);
   color: var(--mat-sys-on-surface-variant);
 }
 
 .pay {
+  grid-area: pay;
+  display: grid;
+  justify-items: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.usd {
   font-weight: 500;
+  white-space: nowrap;
+}
+
+.pay small {
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+  white-space: nowrap;
+}
+
+.bar {
+  grid-area: bar;
+  height: 6px;
+  background: var(--mat-sys-surface-container);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: var(--chart-1);
+  border-radius: 3px;
+}
+
+.bar-fill.low {
+  background: var(--chart-2);
 }
 
 .message {

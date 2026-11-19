@@ -5,7 +5,8 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Subject, catchError, of, switchMap, tap } from 'rxjs';
-import { AnalyticsService, DepartmentExtremes } from '../analytics/analytics.service';
+import { AnalyticsService, DepartmentExtremes, RankedPerson } from '../analytics/analytics.service';
+import { Money } from '../employees/employee.service';
 import { EmployeeService } from '../employees/employee.service';
 
 /** The highest- and lowest-paid active employees, per department, ranked by USD equivalent. */
@@ -24,6 +25,8 @@ export class CompensationPage {
 
   protected readonly departments = signal<string[]>([]);
   protected readonly department = signal('');
+  protected readonly counts = [3, 5, 10, 25];
+  protected readonly count = signal(5);
   protected readonly state = signal<'loading' | 'ready' | 'error'>('loading');
   protected readonly results = signal<DepartmentExtremes[]>([]);
 
@@ -32,7 +35,7 @@ export class CompensationPage {
       .pipe(
         tap(() => this.state.set('loading')),
         switchMap(() =>
-          this.analytics.payExtremes(this.department(), 5).pipe(
+          this.analytics.payExtremes(this.department(), this.count()).pipe(
             tap((result) => {
               this.results.set(result.departments);
               this.state.set('ready');
@@ -55,6 +58,27 @@ export class CompensationPage {
 
   protected load(): void {
     this.requests.next();
+  }
+
+  protected setCount(value: string): void {
+    this.count.set(Number(value));
+    this.load();
+  }
+
+  /** How many people the department's two lists show together. */
+  protected shown(result: DepartmentExtremes): number {
+    return result.highest.length + result.lowest.length;
+  }
+
+  /** The best-paid person's USD pay: the figure every bar in the department is measured against. */
+  protected top(result: DepartmentExtremes): Money {
+    return result.highest[0].salaryUsd;
+  }
+
+  /** A person's pay as a percentage of the department's best-paid person, for the bar. */
+  protected share(person: RankedPerson, result: DepartmentExtremes): number {
+    const best = Number(result.highest[0].salaryUsd.amount);
+    return best > 0 ? Math.round((Number(person.salaryUsd.amount) / best) * 1000) / 10 : 0;
   }
 
   protected choose(department: string): void {

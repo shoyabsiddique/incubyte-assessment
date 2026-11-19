@@ -117,6 +117,7 @@ dd {
 
   select,
   input {
+    box-sizing: border-box;
     min-width: 180px;
     min-height: 40px;
     padding: 6px 10px;
@@ -285,4 +286,33 @@ a:focus-visible {
 
 .cdk-drag-animating {
   transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+// Material tables share the look of the plain data tables: a tinted header, hairline rows, a hover tint
+// and 44px rows, inside the bordered frame.
+table[mat-table] {
+  --mat-table-row-item-container-height: 44px;
+  --mat-table-header-container-height: 44px;
+  background: transparent;
+}
+
+table[mat-table] th.mat-mdc-header-cell {
+  background: var(--mat-sys-surface-container-low);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+  white-space: nowrap;
+}
+
+table[mat-table] th.mat-mdc-header-cell,
+table[mat-table] td.mat-mdc-cell {
+  padding: 0 16px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+}
+
+table[mat-table] tr.mat-mdc-row:last-child td.mat-mdc-cell {
+  border-bottom: 0;
+}
+
+table[mat-table] tr.mat-mdc-row:hover {
+  background: var(--mat-sys-surface-container-lowest);
 }

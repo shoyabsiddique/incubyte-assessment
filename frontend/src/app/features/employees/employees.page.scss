@@ -1,8 +1,21 @@
+:host {
+  display: block;
+  padding: 16px 24px 32px;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 16px;
+  gap: 0 12px;
   align-items: baseline;
+  margin: 12px 0 4px;
+}
+
+// Filters share the 40px control height of the other screens.
+.filters mat-form-field {
+  --mat-form-field-container-height: 40px;
+  --mat-form-field-container-vertical-padding: 8px;
+  --mat-form-field-outlined-label-text-populated-size: 12px;
 }
 
 .search-field {
@@ -35,6 +48,11 @@ table {
 }
 
 .empty {
-  padding: 24px;
-  text-align: center;
+  padding: 24px 0;
+  text-align: left;
+}
+
+mat-paginator {
+  margin-top: 8px;
+  background: transparent;
 }
