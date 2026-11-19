@@ -38,6 +38,15 @@ public class ActiveCompensationEntity {
     @Column(name = "country")
     private String country;
 
+    @Column(name = "city")
+    private String city;
+
+    @Column(name = "employment_type")
+    private String employmentType;
+
+    @Column(name = "hire_date")
+    private LocalDate hireDate;
+
     @Column(name = "department")
     private String department;
 
@@ -77,6 +86,18 @@ public class ActiveCompensationEntity {
 
     public String getCountry() {
         return country;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public String getEmploymentType() {
+        return employmentType;
+    }
+
+    public LocalDate getHireDate() {
+        return hireDate;
     }
 
     public String getDepartment() {

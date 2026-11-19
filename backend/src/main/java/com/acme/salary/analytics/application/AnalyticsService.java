@@ -1,9 +1,15 @@
 package com.acme.salary.analytics.application;
 
 import com.acme.salary.analytics.domain.ActiveSalary;
+import com.acme.salary.analytics.domain.Aggregation;
 import com.acme.salary.analytics.domain.Anomaly;
 import com.acme.salary.analytics.domain.AnomalyDetector;
+import com.acme.salary.analytics.domain.DashboardRow;
+import com.acme.salary.analytics.domain.Dimension;
 import com.acme.salary.analytics.domain.Direction;
+import com.acme.salary.analytics.domain.Measure;
+import com.acme.salary.analytics.domain.PivotCalculator;
+import com.acme.salary.analytics.domain.PivotResult;
 import com.acme.salary.analytics.domain.Extremes;
 import com.acme.salary.analytics.domain.GroupBy;
 import com.acme.salary.analytics.domain.GroupStats;
@@ -57,6 +63,46 @@ public class AnalyticsService {
         ExchangeRates snapshot = rates.snapshot();
         List<GroupStats> groups = SalaryStatistics.calculate(rows, grouping, snapshot, countryFilter.isPresent());
         return new SalaryStatsResult(grouping, countryFilter.isPresent(), groups);
+    }
+
+    /** One aggregated measure grouped by one or two fields, for a dashboard chart. */
+    public PivotResult pivot(
+            String x,
+            String series,
+            String measure,
+            String aggregation,
+            String country,
+            String department,
+            String jobTitle) {
+        Dimension xDimension = Dimension.find(x == null ? "" : x.trim())
+                .orElseThrow(() -> invalid(
+                        "INVALID_DIMENSION", "x must be country, department, jobTitle, city, employmentType or hireYear"));
+        Dimension seriesDimension = series == null || series.isBlank()
+                ? null
+                : Dimension.find(series.trim())
+                        .orElseThrow(() -> invalid("INVALID_DIMENSION", "series must be a field to group by, or left out"));
+        Measure measureValue = measure == null || measure.isBlank()
+                ? Measure.HEADCOUNT
+                : Measure.find(measure.trim())
+                        .orElseThrow(() -> invalid("INVALID_MEASURE", "measure must be headcount, salaryUsd or tenureYears"));
+        Aggregation aggregationValue = aggregation == null || aggregation.isBlank()
+                ? (measureValue == Measure.HEADCOUNT ? Aggregation.COUNT : Aggregation.AVERAGE)
+                : Aggregation.find(aggregation.trim())
+                        .orElseThrow(() -> invalid(
+                                "INVALID_AGGREGATION", "aggregation must be count, sum, average, median, minimum or maximum"));
+        if (!aggregationValue.appliesTo(measureValue)) {
+            throw invalid("INVALID_AGGREGATION", "headcount can only be counted");
+        }
+        if (seriesDimension == xDimension) {
+            throw invalid("INVALID_DIMENSION", "series must differ from x");
+        }
+        Optional<Country> countryFilter = country(country);
+        Optional<String> departmentFilter = known(department, "department", store.departments());
+        Optional<String> titleFilter = known(jobTitle, "jobTitle", store.jobTitles());
+        LocalDate today = today();
+        List<DashboardRow> rows =
+                store.findDashboardRows(today, countryFilter, departmentFilter, titleFilter, rates.snapshot());
+        return PivotCalculator.pivot(rows, xDimension, seriesDimension, measureValue, aggregationValue, today);
     }
 
     public List<DepartmentExtremes> payExtremes(String department, String n) {

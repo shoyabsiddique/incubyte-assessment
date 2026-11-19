@@ -1,6 +1,8 @@
 package com.acme.salary.analytics.persistence;
 
 import com.acme.salary.analytics.domain.ActiveSalary;
+import com.acme.salary.analytics.domain.DashboardRow;
+import com.acme.salary.shared.domain.ExchangeRates;
 import com.acme.salary.shared.domain.Country;
 import com.acme.salary.shared.domain.Money;
 import java.time.LocalDate;
@@ -24,6 +26,11 @@ public class ActiveCompensationStore {
     /** The salary each active employee is paid on {@code today}, narrowed by the filters that are present. */
     public List<ActiveSalary> findInForce(
             LocalDate today, Optional<Country> country, Optional<String> department, Optional<String> jobTitle) {
+        return matching(today, country, department, jobTitle).stream().map(ActiveCompensationStore::toDomain).toList();
+    }
+
+    private List<ActiveCompensationEntity> matching(
+            LocalDate today, Optional<Country> country, Optional<String> department, Optional<String> jobTitle) {
         Specification<ActiveCompensationEntity> spec = (root, query, cb) -> cb.and(
                 cb.lessThanOrEqualTo(root.get("effectiveStart"), today),
                 cb.or(cb.isNull(root.get("effectiveEnd")), cb.greaterThanOrEqualTo(root.get("effectiveEnd"), today)));
@@ -36,7 +43,26 @@ public class ActiveCompensationStore {
         if (jobTitle.isPresent()) {
             spec = spec.and((root, query, cb) -> cb.equal(root.get("jobTitle"), jobTitle.get()));
         }
-        return repository.findAll(spec).stream().map(ActiveCompensationStore::toDomain).toList();
+        return repository.findAll(spec);
+    }
+
+    /** Everyone in force on {@code today}, with their pay converted to USD at one snapshot, for the dashboard. */
+    public List<DashboardRow> findDashboardRows(
+            LocalDate today,
+            Optional<Country> country,
+            Optional<String> department,
+            Optional<String> jobTitle,
+            ExchangeRates rates) {
+        return matching(today, country, department, jobTitle).stream()
+                .map(row -> new DashboardRow(
+                        Country.valueOf(row.getCountry()),
+                        row.getDepartment(),
+                        row.getJobTitle(),
+                        row.getCity(),
+                        row.getEmploymentType(),
+                        row.getHireDate(),
+                        rates.toUsd(Money.of(row.getAmount(), Currency.getInstance(row.getCurrency()))).amount()))
+                .toList();
     }
 
     public TreeSet<String> departments() {

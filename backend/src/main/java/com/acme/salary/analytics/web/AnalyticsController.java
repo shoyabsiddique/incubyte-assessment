@@ -3,6 +3,8 @@ package com.acme.salary.analytics.web;
 import com.acme.salary.analytics.application.AnalyticsService;
 import com.acme.salary.analytics.application.AnomalyPage;
 import com.acme.salary.analytics.domain.Anomaly;
+import com.acme.salary.analytics.domain.Dimension;
+import com.acme.salary.analytics.domain.PivotResult;
 import com.acme.salary.analytics.application.DepartmentExtremes;
 import com.acme.salary.analytics.application.SalaryStatsResult;
 import com.acme.salary.analytics.domain.ActiveSalary;
@@ -38,6 +40,53 @@ class AnalyticsController {
         return new SalaryStatsResponse(
                 result.groupBy().name().equals("JOB_TITLE") ? "jobTitle" : result.groupBy().name().toLowerCase(),
                 result.groups().stream().map(AnalyticsController::group).toList());
+    }
+
+    @GetMapping("/pivot")
+    PivotResponse pivot(
+            @RequestParam(required = false) String x,
+            @RequestParam(required = false) String series,
+            @RequestParam(required = false) String measure,
+            @RequestParam(required = false) String aggregation,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String jobTitle) {
+        PivotResult result = analytics.pivot(x, series, measure, aggregation, country, department, jobTitle);
+        Dimension xDimension = Dimension.find(x.trim()).orElseThrow();
+        Dimension seriesDimension = series == null || series.isBlank() ? null : Dimension.find(series.trim()).orElseThrow();
+        boolean whole = isCount(measure, aggregation);
+        return new PivotResponse(
+                result.categories().stream()
+                        .map(key -> new CategoryResponse(key, categoryLabel(xDimension, key)))
+                        .toList(),
+                result.series().stream()
+                        .map(s -> new PivotSeriesResponse(
+                                s.key(),
+                                seriesDimension == null ? "All" : categoryLabel(seriesDimension, s.key()),
+                                s.points().stream()
+                                        .map(p -> new PivotPointResponse(
+                                                p.value().setScale(whole ? 0 : 2, RoundingMode.HALF_UP).toPlainString(),
+                                                p.count()))
+                                        .toList()))
+                        .toList());
+    }
+
+    private static boolean isCount(String measure, String aggregation) {
+        boolean noAggregation = aggregation == null || aggregation.isBlank();
+        boolean noMeasure = measure == null || measure.isBlank();
+        return noAggregation ? noMeasure || measure.trim().equals("headcount") : aggregation.trim().equals("count");
+    }
+
+    /** Keys read as words: INDIA becomes "India", FULL_TIME becomes "Full time"; other fields are already text. */
+    private static String categoryLabel(Dimension dimension, String key) {
+        return switch (dimension) {
+            case COUNTRY -> Country.valueOf(key).displayName();
+            case EMPLOYMENT_TYPE -> {
+                String words = key.replace('_', ' ').toLowerCase();
+                yield Character.toUpperCase(words.charAt(0)) + words.substring(1);
+            }
+            default -> key;
+        };
     }
 
     @GetMapping("/pay-extremes")
@@ -166,4 +215,12 @@ class AnalyticsController {
             int peerGroupSize,
             String deviationPercent,
             String direction) {}
+
+    record PivotResponse(List<CategoryResponse> categories, List<PivotSeriesResponse> series) {}
+
+    record CategoryResponse(String key, String label) {}
+
+    record PivotSeriesResponse(String key, String label, List<PivotPointResponse> points) {}
+
+    record PivotPointResponse(String value, long count) {}
 }
