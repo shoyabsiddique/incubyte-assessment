@@ -5,26 +5,67 @@
 // custom components at https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
+// "Teal on paper": a cool off-white ground, ink-teal accent and an amber second voice, with a matching
+// dark scheme. Material's system tokens carry every colour; the overrides below replace its defaults.
+// The scheme follows the system unless the viewer chooses one (data-theme on the root element).
+:root {
+  color-scheme: light dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
 html {
   height: 100%;
   @include mat.theme(
     (
       color: (
-        primary: mat.$azure-palette,
-        tertiary: mat.$blue-palette,
+        primary: mat.$cyan-palette,
+        tertiary: mat.$orange-palette,
       ),
       typography: Roboto,
       density: 0,
     )
   );
+  @include mat.theme-overrides(
+    (
+      primary: light-dark(#06525c, #7fcad4),
+      on-primary: light-dark(#ffffff, #00363d),
+      primary-container: light-dark(#cde9ee, #00464f),
+      on-primary-container: light-dark(#002a30, #cde9ee),
+      secondary-container: light-dark(#dbe5e3, #2b3a39),
+      on-secondary-container: light-dark(#121e1d, #dbe5e3),
+      tertiary: light-dark(#b45309, #f5b36b),
+      on-tertiary: light-dark(#ffffff, #4a2800),
+      tertiary-container: light-dark(#ffddb8, #6b3a00),
+      on-tertiary-container: light-dark(#3a1d00, #ffddb8),
+      error: light-dark(#ba1a1a, #ffb4ab),
+      error-container: light-dark(#ffdad6, #93000a),
+      on-error-container: light-dark(#410002, #ffdad6),
+      surface: light-dark(#f7f9f8, #0e1516),
+      surface-dim: light-dark(#d8dedc, #0b1112),
+      surface-bright: light-dark(#f7f9f8, #2a3233),
+      surface-container-lowest: light-dark(#ffffff, #0a1011),
+      surface-container-low: light-dark(#eff3f2, #131b1c),
+      surface-container: light-dark(#e8eeed, #182122),
+      surface-container-high: light-dark(#e1e8e6, #1f292a),
+      surface-container-highest: light-dark(#dbe3e1, #293334),
+      on-surface: light-dark(#14211f, #dbe6e4),
+      on-surface-variant: light-dark(#3f4f4d, #a8b8b6),
+      outline: light-dark(#6f7f7d, #7e8f8d),
+      outline-variant: light-dark(#c3d0ce, #2f3d3c),
+      background: light-dark(#f7f9f8, #0e1516),
+      on-background: light-dark(#14211f, #dbe6e4),
+    )
+  );
 }
 
 body {
-  // Default the application to a light color theme. This can be changed to
-  // `dark` to enable the dark color theme, or to `light dark` to defer to the
-  // user's system settings.
-  color-scheme: light;
-
   // Set a default background, font and text colors for the application using
   // Angular Material's system-level CSS variables. Learn more about these
   // variables at https://material.angular.dev/guide/system-variables
@@ -219,16 +260,17 @@ a:focus-visible {
   border: 1px solid var(--mat-sys-outline-variant);
 }
 
-// Categorical chart colours (the colour-blind-safe Okabe-Ito set) used for chart series.
+// Categorical chart colours, one set per scheme: built around the teal accent with amber, steel,
+// olive, brick, slate, gold and sea green, all distinguishable by hue and by lightness.
 :root {
-  --chart-1: #0072b2;
-  --chart-2: #e69f00;
-  --chart-3: #009e73;
-  --chart-4: #d55e00;
-  --chart-5: #56b4e9;
-  --chart-6: #cc79a7;
-  --chart-7: #b8a400;
-  --chart-8: #6b7280;
+  --chart-1: light-dark(#06525c, #5cc4d0);
+  --chart-2: light-dark(#c2740a, #f0a54a);
+  --chart-3: light-dark(#3f7fa3, #7fb2d6);
+  --chart-4: light-dark(#7a9a2e, #a6c75a);
+  --chart-5: light-dark(#b0412e, #ef7a63);
+  --chart-6: light-dark(#6b7f86, #9db0b6);
+  --chart-7: light-dark(#a8861a, #e3c35a);
+  --chart-8: light-dark(#3a9d8a, #6fd1bd);
 }
 
 // A dashboard chart being dragged (the preview lives outside the page, so the styles are global).

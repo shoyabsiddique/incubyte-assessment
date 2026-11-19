@@ -147,6 +147,33 @@ describe('App shell', () => {
     });
   });
 
+  describe('colour theme', () => {
+    afterEach(() => {
+      localStorage.removeItem('acme.theme');
+      document.documentElement.removeAttribute('data-theme');
+    });
+
+    it('offers a theme button even before sign-in, named for what it does', async () => {
+      const { shell } = await setUp(false);
+
+      const button = shell.querySelector('button.theme-toggle') as HTMLButtonElement;
+      expect(button).not.toBeNull();
+      expect(button.getAttribute('aria-label')).toBe('Colour theme: system. Switch to light.');
+    });
+
+    it('switches the theme when pressed and says what comes next', async () => {
+      const { fixture, shell } = await setUp(true);
+
+      (shell.querySelector('button.theme-toggle') as HTMLButtonElement).click();
+      fixture.detectChanges();
+
+      expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+      expect(shell.querySelector('button.theme-toggle')?.getAttribute('aria-label')).toBe(
+        'Colour theme: light. Switch to dark.',
+      );
+    });
+  });
+
   it('has no menu button on a wide screen, where the navigation is always shown', async () => {
     const { shell } = await setUp(true);
 

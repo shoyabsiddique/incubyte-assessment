@@ -13,6 +13,22 @@
   }
   <h1 class="app-title">{{ title }}</h1>
   <span class="spacer"></span>
+  <button
+    mat-icon-button
+    class="theme-toggle"
+    type="button"
+    [attr.aria-label]="theme.label()"
+    [title]="theme.label()"
+    (click)="theme.cycle()"
+  >
+    <mat-icon>{{
+      theme.mode() === 'dark'
+        ? 'dark_mode'
+        : theme.mode() === 'light'
+          ? 'light_mode'
+          : 'brightness_auto'
+    }}</mat-icon>
+  </button>
   @if (auth.user(); as user) {
     <span class="user">{{ user.email }}</span>
     <button class="sign-out" mat-button type="button" (click)="signOut()">Sign out</button>

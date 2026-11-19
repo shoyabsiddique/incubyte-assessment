@@ -10,6 +10,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { APP_NAME } from './app-name';
 import { AuthService } from './core/auth/auth.service';
+import { ThemeService } from './core/theme/theme.service';
 
 interface NavItem {
   readonly label: string;
@@ -34,6 +35,7 @@ interface NavItem {
 })
 export class App {
   protected readonly auth = inject(AuthService);
+  protected readonly theme = inject(ThemeService);
   protected readonly title = APP_NAME;
   /** Below this width the navigation becomes a drawer opened from a menu button. */
   protected readonly narrow = toSignal(

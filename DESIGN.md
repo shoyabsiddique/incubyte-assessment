@@ -1,23 +1,24 @@
 ---
 name: ACME Salary Management
-description: An operational HR tool built on Angular Material 3 where exact figures, aligned columns and visible change history carry the design.
+description: An operational HR tool, teal on paper with a matching dark scheme, where exact figures, aligned columns and visible change history carry the design.
 colors:
-  primary: "#005cbb"
+  primary: "#06525c"
   on-primary: "#ffffff"
-  primary-container: "#d7e3ff"
-  on-primary-container: "#00458f"
-  tertiary: "#343dff"
-  secondary-container: "#dae2f9"
+  primary-container: "#cde9ee"
+  on-primary-container: "#002a30"
+  tertiary: "#b45309"
+  tertiary-container: "#ffddb8"
+  secondary-container: "#dbe5e3"
   error: "#ba1a1a"
   error-container: "#ffdad6"
   on-error-container: "#410002"
-  surface: "#faf9fd"
-  surface-container-low: "#f4f3f6"
+  surface: "#f7f9f8"
+  surface-container-low: "#eff3f2"
   surface-container-lowest: "#ffffff"
-  on-surface: "#1a1b1f"
-  on-surface-variant: "#44474e"
-  outline: "#74777f"
-  outline-variant: "#c4c6d0"
+  on-surface: "#14211f"
+  on-surface-variant: "#3f4f4d"
+  outline: "#6f7f7d"
+  outline-variant: "#c3d0ce"
 typography:
   headline:
     fontFamily: "Roboto, sans-serif"
@@ -83,43 +84,48 @@ components:
 
 **Creative North Star: "The Ledger"**
 
-The interface is an instrument for reading and correcting money: precise, orderly and trustworthy. Figures are aligned in columns, units sit next to every amount, dates are written the same way everywhere, and what changed is always visible afterwards. The system is Angular Material 3 with its stock azure palette and Roboto, deliberately unadorned; the work, not the chrome, is the loudest thing on screen.
+The interface is an instrument for reading and correcting money: precise, orderly and trustworthy. Figures are aligned in columns, units sit next to every amount, dates are written the same way everywhere, and what changed is always visible afterwards. The system is Angular Material 3 tuned to a "teal on paper" palette and Roboto, with a matching dark scheme; the work, not the chrome, is the loudest thing on screen.
 
 It is desk-first and dense enough to scan thousands of rows, and it collapses to a drawer navigation on narrow screens as a courtesy rather than an optimised mobile design.
 
 **Key Characteristics:**
-- Neutral surfaces, one blue accent used for primary actions, the current navigation item and focus.
+- Cool paper surfaces, one ink-teal accent used for primary actions, the current navigation item and focus, and amber as the single second voice.
 - Right-aligned, tabular figures; sentence-case labels; amounts always followed by their currency code.
 - One shared page vocabulary: heading, one-sentence intro, filter row, data table, feedback blocks.
 - Meaning is never carried by colour alone: deviations carry a sign, statuses carry words.
 
 ## Colors
 
-A restrained neutral palette with a single azure accent; the colours are Angular Material 3's system tokens (`--mat-sys-*`) and are not redefined by the application.
+"Teal on paper": a cool off-white ground, an ink-teal accent and amber as a second voice for things that need a second look. The values below are the light scheme; a dark scheme with the same roles follows the system setting unless the viewer picks one with the toolbar button (system, light, dark; remembered in their browser). All of it is expressed as Material system tokens (`--mat-sys-*`) overridden once in the global stylesheet.
 
 ### Primary
-- **Azure Ink** (#005cbb): filled buttons, the active navigation item, focus rings and selected state. Rare by design.
+- **Ink Teal** (#06525c; dark scheme #7fcad4): filled buttons, the active navigation item, focus rings and selected state. Rare by design.
+- **Teal Wash** (#cde9ee; dark #00464f): the "Current" tag and selected chart-type button.
 
 ### Secondary
-- **Pale Slate Blue** (#dae2f9): confirmation notices (for example "Salary revised").
+- **Pale Sage** (#dbe5e3; dark #2b3a39): confirmation notices (for example "Salary revised").
 
 ### Tertiary
-- **Signal Indigo** (#343dff): the "above the median" deviation on the anomalies page. Always paired with a "+" sign.
+- **Amber** (#b45309; dark #f5b36b): the "above the median" deviation on the anomalies page, always paired with a "+" sign.
 
 ### Neutral
-- **Paper** (#faf9fd): page surface.
-- **Mist** (#f4f3f6): toolbar and sidenav, one step below the page.
-- **White** (#ffffff): the lightest layer, used for row hover.
-- **Ink** (#1a1b1f): body text.
-- **Slate** (#44474e): secondary text, hints and table headers.
-- **Hairline** (#c4c6d0): 1px borders and dividers; **Stone** (#74777f) for control outlines.
+- **Paper** (#f7f9f8; dark #0e1516): page surface.
+- **Mist** (#eff3f2; dark #131b1c): toolbar and sidenav, one step below the page.
+- **White** (#ffffff; dark #0a1011): the lightest layer: chart tiles and row hover.
+- **Ink** (#14211f; dark #dbe6e4): body text.
+- **Slate** (#3f4f4d; dark #a8b8b6): secondary text, hints and table headers.
+- **Hairline** (#c3d0ce; dark #2f3d3c): 1px borders and dividers; **Stone** (#6f7f7d; dark #7e8f8d) for control outlines.
 
 ### Error
-- **Alarm Red** (#ba1a1a) on **Blush** (#ffdad6): error banners and the "below the median" deviation (always with a "-" sign).
+- **Alarm Red** (#ba1a1a; dark #ffb4ab) on **Blush** (#ffdad6; dark #93000a): error banners and the "below the median" deviation (always with a "-" sign).
+
+### Chart series
+Eight categorical colours, each tuned per scheme to stay at least 3:1 against the chart tile: teal, amber, steel blue, olive, brick, slate, gold and sea green (`--chart-1` to `--chart-8`).
 
 ### Named Rules
-**The One Voice Rule.** Azure is the only accent. It marks what can be acted on or what is current; it is never decoration.
+**The One Voice Rule.** Teal is the accent. It marks what can be acted on or what is current; it is never decoration. Amber is the only second voice and is reserved for "look at this".
 **The Sign Before Colour Rule.** Anything coloured to mean "above" or "below" must also say it in text.
+**The Both Schemes Rule.** A colour is never written as a literal in a component: it comes from a system token or a `--chart-*` variable so both schemes stay in step.
 
 ## Typography
 
@@ -154,13 +160,13 @@ The component feel is Material as a base with refined, consistent detail. Today 
 
 ### Buttons
 - **Shape:** Material 3 rounded buttons (about 16px).
-- **Primary:** Filled azure (#005cbb) with white label, used once per view for the main action ("Save changes", "Run simulation").
+- **Primary:** Filled ink teal (#06525c) with white label, used once per view for the main action ("Save changes", "Run simulation").
 - **Secondary:** Outlined (stroked) buttons for edit, revise and cancel-style actions; text buttons for back links.
 - **States:** Material hover, focus and disabled states; keyboard focus is always visible.
 
 ### Inputs / Fields
 - **Forms (create, edit, revise):** Material outlined form fields with inline error text under the field and server errors set on the field they concern.
-- **Filter rows:** plain native selects and inputs, 40px high, 1px Stone outline, 4px radius; hover darkens the outline, `:focus-visible` shows a 2px azure outline.
+- **Filter rows:** plain native selects and inputs, 40px high, 1px Stone outline, 4px radius; hover darkens the outline, `:focus-visible` shows a 2px teal outline.
 
 ### Tables
 - **Frame:** 1px Hairline border, 8px radius, scrolls horizontally inside the frame.
@@ -185,7 +191,7 @@ The component feel is Material as a base with refined, consistent detail. Today 
 - **Do** pair any colour meaning with a sign or a word.
 
 ### Don't:
-- **Don't** add a second accent colour or use azure as decoration.
+- **Don't** add another accent colour beyond amber, or use teal as decoration.
 - **Don't** use shadows at rest on flat surfaces; reserve them for floating layers.
 - **Don't** introduce display fonts, gradients, glows or decorative motion in an operational screen.
 - **Don't** style a one-off control on a single page when a shared style exists.
