@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 import { APP_NAME } from './app-name';
-import { authGuard } from './core/auth/auth.guard';
+import { authGuard, guestGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
@@ -64,6 +64,7 @@ export const routes: Routes = [
   },
   {
     path: 'auth',
+    canActivate: [guestGuard],
     title: `Sign in | ${APP_NAME}`,
     loadComponent: () => import('./features/auth/auth.page').then((m) => m.SignInPage),
   },

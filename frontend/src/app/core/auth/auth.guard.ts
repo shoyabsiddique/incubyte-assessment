@@ -12,3 +12,9 @@ export const authGuard: CanActivateFn = (_route, state) => {
   // Remember where the visitor was going so sign-in can take them back there.
   return router.createUrlTree(['/auth'], { queryParams: { returnUrl: state.url } });
 };
+
+/** Keeps signed-in users off the sign-in page: they have nothing to sign in to. */
+export const guestGuard: CanActivateFn = () => {
+  const auth = inject(AuthService);
+  return auth.isAuthenticated() ? inject(Router).createUrlTree(['/dashboard']) : true;
+};

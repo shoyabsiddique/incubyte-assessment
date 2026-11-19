@@ -50,7 +50,9 @@ describe('app routes', () => {
 
   for (const feature of FEATURES) {
     it(`lazy-loads the ${feature.heading} page at /${feature.path}`, async () => {
-      signIn();
+      if (feature.protectedPage) {
+        signIn();
+      }
 
       const page = await open(`/${feature.path}`);
 
@@ -65,7 +67,9 @@ describe('app routes', () => {
     });
 
     it(`sets the browser tab title for /${feature.path}`, async () => {
-      signIn();
+      if (feature.protectedPage) {
+        signIn();
+      }
       await open(`/${feature.path}`);
 
       expect(document.title).toBe(`${feature.heading} | ACME Salary Management`);
@@ -86,6 +90,14 @@ describe('app routes', () => {
 
     expect(TestBed.inject(Router).url).toBe('/auth');
     expect(page.querySelector('h2')?.textContent).toContain('Sign in');
+  });
+
+  it('sends a signed-in user from the sign-in page straight to the dashboard', async () => {
+    signIn();
+
+    await open('/auth');
+
+    expect(TestBed.inject(Router).url).toBe('/dashboard');
   });
 
   it('shows the not-found view for unknown paths below a known page', async () => {

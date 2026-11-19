@@ -9,7 +9,7 @@ import {
 } from '@angular/router';
 import { AppConfigService } from '../config/app-config.service';
 import { AuthService } from './auth.service';
-import { authGuard } from './auth.guard';
+import { authGuard, guestGuard } from './auth.guard';
 
 describe('authGuard', () => {
   let auth: AuthService;
@@ -43,5 +43,26 @@ describe('authGuard', () => {
 
     expect(result).toBeInstanceOf(UrlTree);
     expect((result as UrlTree).toString()).toBe('/auth?returnUrl=%2Femployees');
+  });
+
+  describe('guestGuard', () => {
+    function runGuest() {
+      return TestBed.runInInjectionContext(() =>
+        guestGuard({} as ActivatedRouteSnapshot, { url: '/auth' } as RouterStateSnapshot),
+      );
+    }
+
+    it('lets a signed-out visitor see the sign-in page', () => {
+      expect(runGuest()).toBe(true);
+    });
+
+    it('sends a signed-in user to the dashboard instead of showing sign-in again', () => {
+      auth.establishSession('tok', { id: 'u-1', email: 'a@b.c', displayName: 'A' });
+
+      const result = runGuest();
+
+      expect(result).toBeInstanceOf(UrlTree);
+      expect((result as UrlTree).toString()).toBe('/dashboard');
+    });
   });
 });
