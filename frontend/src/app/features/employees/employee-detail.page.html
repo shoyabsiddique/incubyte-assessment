@@ -21,14 +21,82 @@
   }
   @case ('ready') {
     @if (employee(); as person) {
-      <div class="heading">
-        <h2>{{ person.firstName }} {{ person.lastName }}</h2>
+      <header class="identity">
+        <span class="avatar" aria-hidden="true">{{ initials(person) }}</span>
+        <div class="who">
+          <h2>{{ person.firstName }} {{ person.lastName }}</h2>
+          <p class="subtitle">
+            {{ person.jobTitle }} · {{ person.department }} · {{ person.countryName }}
+          </p>
+        </div>
+        <span class="status-badge" [attr.data-status]="person.status">
+          {{ label(person.status) }}
+        </span>
         @if (!editing()) {
           <button mat-stroked-button class="edit" type="button" (click)="startEditing()">
             Edit profile
           </button>
         }
+      </header>
+
+      <div class="tiles">
+        <section class="tile current-salary" aria-label="Current salary">
+          <h3 class="tile-label">Current salary</h3>
+          @if (notice()) {
+            <p class="notice" role="status">{{ notice() }}</p>
+          }
+          @if (person.salary && person.salaryUsd) {
+            <p class="local">
+              {{ person.salary.amount | number: '1.2-2' }} {{ person.salary.currency }}
+            </p>
+            <p class="usd">
+              {{ person.salaryUsd.amount | number: '1.2-2' }} {{ person.salaryUsd.currency }}
+            </p>
+          } @else {
+            <p class="local">—</p>
+          }
+          @if (person.salary && !revising()) {
+            <button
+              mat-stroked-button
+              class="revise-salary"
+              type="button"
+              (click)="startRevising()"
+            >
+              Revise salary
+            </button>
+          }
+        </section>
+        <section class="tile tile-tenure" aria-label="Tenure">
+          <h3 class="tile-label">Tenure</h3>
+          <p class="tile-value">{{ tenure(person.hireDate) }}</p>
+          <p class="tile-note">Hired {{ person.hireDate | date: 'mediumDate' }}</p>
+        </section>
+        <section class="tile tile-since" aria-label="Current salary since">
+          <h3 class="tile-label">Current salary since</h3>
+          <p class="tile-value">
+            @if (currentSince(); as since) {
+              {{ since | date: 'mediumDate' }}
+            } @else {
+              —
+            }
+          </p>
+        </section>
+        <section class="tile tile-changes" aria-label="Salary changes">
+          <h3 class="tile-label">Salary changes</h3>
+          <p class="tile-value">{{ changes() }}</p>
+          <p class="tile-note">since the first record</p>
+        </section>
       </div>
+
+      @if (revising()) {
+        <app-salary-revision-form
+          [employeeId]="person.id"
+          [current]="person.salary"
+          (revised)="onRevised($event)"
+          (cancelled)="revising.set(false)"
+          (reload)="reloadLatest()"
+        />
+      }
 
       <mat-tab-group [selectedIndex]="tab()" (selectedIndexChange)="tab.set($event)">
         <mat-tab label="Details">
@@ -83,47 +151,14 @@
             </section>
           }
 
-          <section class="current-salary" aria-label="Current salary">
-            <div class="salary-heading">
-              <h3>Current salary</h3>
-              @if (person.salary && !revising()) {
-                <button
-                  mat-stroked-button
-                  class="revise-salary"
-                  type="button"
-                  (click)="startRevising()"
-                >
-                  Revise salary
-                </button>
-              }
-            </div>
-            @if (notice()) {
-              <p class="notice" role="status">{{ notice() }}</p>
-            }
-            @if (person.salary && person.salaryUsd) {
-              <p class="local">
-                {{ person.salary.amount | number: '1.2-2' }} {{ person.salary.currency }}
-              </p>
-              <p class="usd">
-                {{ person.salaryUsd.amount | number: '1.2-2' }} {{ person.salaryUsd.currency }}
-              </p>
-            } @else {
-              <p>—</p>
-            }
-            @if (revising()) {
-              <app-salary-revision-form
-                [employeeId]="person.id"
-                [current]="person.salary"
-                (revised)="onRevised($event)"
-                (cancelled)="revising.set(false)"
-                (reload)="reloadLatest()"
-              />
-            }
-          </section>
-
           <section aria-label="Salary history">
             <h3>Salary history</h3>
             <p class="note">USD figures use current exchange rates.</p>
+            @if (chart(); as model) {
+              <div class="history-chart">
+                <app-chart [model]="model" type="line" measure="salaryUsd" aggregation="average" />
+              </div>
+            }
             @if (history().length === 0) {
               <p>No salary has been recorded for this employee.</p>
             } @else {

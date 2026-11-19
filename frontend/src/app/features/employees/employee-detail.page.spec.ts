@@ -318,6 +318,44 @@ describe('EmployeeDetailPage', () => {
     expect(rows[0].textContent).not.toContain('Current');
   });
 
+  describe('at a glance', () => {
+    it('shows their initials, role line and status next to the name', async () => {
+      await loadEverything();
+
+      expect(page.querySelector('.avatar')?.textContent?.trim()).toBe('CS');
+      expect(page.querySelector('.subtitle')?.textContent).toContain(
+        'Software Engineer · Engineering · Australia',
+      );
+      const status = page.querySelector('.status-badge');
+      expect(status?.textContent?.trim()).toBe('On leave');
+      expect(status?.getAttribute('data-status')).toBe('ON_LEAVE');
+    });
+
+    it('summarises tenure, when the current salary started and how often it has changed', async () => {
+      await loadEverything();
+
+      const tiles = page.querySelector('.tiles')?.textContent ?? '';
+      expect(tiles).toMatch(/Tenure\s*\d+ years?/);
+      expect(tiles).toContain('Jun 1, 2023');
+      expect(page.querySelector('.tile-changes .tile-value')?.textContent?.trim()).toBe('2');
+    });
+
+    it('draws the salary over time in USD once there is more than one record', async () => {
+      await loadEverything();
+
+      const chart = page.querySelector('.history-chart');
+      expect(chart?.querySelector('svg')).not.toBeNull();
+      expect(chart?.querySelectorAll('circle.dot').length).toBe(3);
+    });
+
+    it('does not draw a chart for a single salary record', async () => {
+      await loadEverything(EMPLOYEE, [HISTORY[0]]);
+
+      expect(page.querySelector('.history-chart')).toBeNull();
+      expect(page.querySelector('.tile-changes .tile-value')?.textContent?.trim()).toBe('0');
+    });
+  });
+
   describe('revising the salary', () => {
     async function openTheForm() {
       (page.querySelector('button.revise-salary') as HTMLButtonElement).click();
