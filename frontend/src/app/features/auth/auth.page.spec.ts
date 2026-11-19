@@ -146,6 +146,64 @@ describe('SignInPage', () => {
     }
   });
 
+  it('says what the product is for, with three facts it really offers', async () => {
+    const fixture = await render();
+    const page = fixture.nativeElement as HTMLElement;
+
+    expect(page.querySelector('.brand-headline')?.textContent).toContain('ACME pays');
+    const points = Array.from(page.querySelectorAll('.brand .point')).map((p) =>
+      p.textContent?.trim(),
+    );
+    expect(points.length).toBe(3);
+    expect(points.join(' ')).toContain('audit');
+  });
+
+  it('can show and hide the password, and says which it will do', async () => {
+    const fixture = await render();
+    const page = fixture.nativeElement as HTMLElement;
+    const toggle = () => page.querySelector('button.toggle-password') as HTMLButtonElement;
+    const input = () => page.querySelector('#password') as HTMLInputElement;
+
+    expect(input().type).toBe('password');
+    expect(toggle().getAttribute('aria-label')).toBe('Show password');
+
+    toggle().click();
+    fixture.detectChanges();
+
+    expect(input().type).toBe('text');
+    expect(toggle().getAttribute('aria-label')).toBe('Hide password');
+    expect(toggle().getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('shows that it is working and cannot be pressed twice while signing in', async () => {
+    const fixture = await render();
+    const page = fixture.nativeElement as HTMLElement;
+    fill(page, 'priya@acme.example', 'secret');
+
+    (page.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+    fixture.detectChanges();
+
+    const submit = page.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(submit.disabled).toBe(true);
+    expect(submit.textContent).toContain('Signing in');
+    http.expectOne(LOGIN_URL).flush(SESSION);
+  });
+
+  it('marks the fields invalid and ties the message to them when sign-in fails', async () => {
+    const fixture = await render();
+    const page = fixture.nativeElement as HTMLElement;
+    fill(page, 'priya@acme.example', 'wrong');
+    (page.querySelector('button[type="submit"]') as HTMLButtonElement).click();
+    http.expectOne(LOGIN_URL).flush({}, { status: 401, statusText: 'Unauthorized' });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const message = page.querySelector('[role="alert"]') as HTMLElement;
+    expect(message.id).toBe('sign-in-error');
+    expect(page.querySelector('#password')?.getAttribute('aria-describedby')).toBe('sign-in-error');
+    expect(page.querySelector('#email')?.getAttribute('aria-invalid')).toBe('true');
+  });
+
   it('shows the generic failure message and keeps the user on the page', async () => {
     const fixture = await render();
     const page = fixture.nativeElement as HTMLElement;

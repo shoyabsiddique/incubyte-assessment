@@ -6,7 +6,7 @@ const PASSWORD = process.env['E2E_PASSWORD'] ?? 'LocalDemo#2026';
 export async function signIn(page: Page) {
   await page.goto('/');
   await page.getByLabel('Email').fill(EMAIL);
-  await page.getByLabel('Password').fill(PASSWORD);
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
 }

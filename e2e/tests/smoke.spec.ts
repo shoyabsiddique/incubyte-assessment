@@ -9,7 +9,7 @@ test('an HR Manager signs in, finds an employee, reads their pay and signs out',
   await expect(page).toHaveURL(/\/auth/);
 
   await page.getByLabel('Email').fill(EMAIL);
-  await page.getByLabel('Password').fill(PASSWORD);
+  await page.getByLabel('Password', { exact: true }).fill(PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible();
 

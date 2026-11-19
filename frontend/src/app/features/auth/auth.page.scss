@@ -1,0 +1,132 @@
+:host {
+  display: block;
+}
+
+.sign-in {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  min-height: calc(100dvh - 64px);
+}
+
+.form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+}
+
+.form-wrap {
+  width: 100%;
+  max-width: 380px;
+}
+
+h2 {
+  margin: 0 0 4px;
+  font: var(--mat-sys-headline-medium);
+}
+
+.lede {
+  margin: 0 0 24px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.error {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: var(--mat-sys-error-container);
+  color: var(--mat-sys-on-error-container);
+}
+
+.submit {
+  height: 48px;
+  margin-top: 8px;
+  font: var(--mat-sys-label-large);
+}
+
+.demo-note {
+  margin: 24px 0 0;
+  font: var(--mat-sys-body-small);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+// The brand panel sits on the left on wide screens; it comes second in the markup so the form is
+// first for keyboard and screen-reader users.
+.brand {
+  order: -1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 24px;
+  padding: 48px clamp(24px, 6vw, 80px);
+  background: var(--mat-sys-primary);
+  color: var(--mat-sys-on-primary);
+}
+
+.art {
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+}
+
+.bars rect {
+  fill: var(--mat-sys-on-primary);
+  fill-opacity: 0.28;
+}
+
+.trend {
+  stroke: var(--mat-sys-on-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+
+.brand-headline {
+  max-width: 14ch;
+  margin: 0;
+  font-size: clamp(2rem, 3.2vw, 3rem);
+  font-weight: 500;
+  line-height: 1.1;
+  letter-spacing: -0.01em;
+}
+
+.points {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  max-width: 44ch;
+}
+
+.point {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font: var(--mat-sys-body-large);
+}
+
+.point mat-icon {
+  flex: none;
+  margin-top: 1px;
+  opacity: 0.9;
+}
+
+@media (max-width: 900px) {
+  .sign-in {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: calc(100dvh - 56px);
+  }
+
+  // On a phone the form is the page; the pitch is not worth the scrolling.
+  .brand {
+    display: none;
+  }
+}
