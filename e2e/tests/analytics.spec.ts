@@ -20,12 +20,21 @@ test('an HR Manager builds a dashboard: filters it, adds a chart and drags field
   await expect(tiles).toHaveCount(5);
   const added = tiles.nth(4);
   await added.getByRole('button', { name: 'Configure this chart' }).click();
+  // A drop needs both ends on screen: the fields panel is sticky, so bring the chart's boxes to it.
+  await added.locator('.well-x').scrollIntoViewIfNeeded();
   await page.locator('.field-chip[data-key="jobTitle"]').dragTo(added.locator('.well-x'));
   await expect(added.locator('.widget-title')).toHaveText('Headcount by job title');
+  await added.locator('.well-value').scrollIntoViewIfNeeded();
   await page.locator('.field-chip[data-key="salaryUsd"]').dragTo(added.locator('.well-value'));
   await expect(added.locator('.widget-title')).toContainText('salary (USD) by job title');
   await added.locator('select[name="series"]').selectOption('country');
   await expect(added.locator('.legend li').first()).toBeVisible();
+
+  for (const type of ['stackedColumn', 'area', 'pie', 'heatmap', 'line', 'bar', 'kpi', 'table']) {
+    await added.locator(`button.chart-type[data-chart="${type}"]`).click();
+    await expect(added.locator('svg.chart, .kpi, table.chart-table').first()).toBeVisible();
+  }
+  await added.locator('button.chart-type[data-chart="column"]').click();
 
   await added.getByRole('button', { name: 'Move this chart earlier' }).click();
   await expect(tiles.nth(3).locator('.widget-title')).toContainText('by job title');

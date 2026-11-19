@@ -226,6 +226,27 @@ describe('WidgetComponent', () => {
     expect(view.querySelectorAll('polyline.line').length).toBe(1);
   });
 
+  it('offers every chart type', async () => {
+    await load();
+    await openPanel();
+
+    const types = Array.from(view.querySelectorAll('button.chart-type')).map((b) =>
+      b.getAttribute('data-chart'),
+    );
+    expect(types).toEqual([
+      'column',
+      'stackedColumn',
+      'bar',
+      'line',
+      'area',
+      'donut',
+      'pie',
+      'heatmap',
+      'kpi',
+      'table',
+    ]);
+  });
+
   it('accepts a dimension dropped on the x axis well', async () => {
     await load();
     await openPanel();

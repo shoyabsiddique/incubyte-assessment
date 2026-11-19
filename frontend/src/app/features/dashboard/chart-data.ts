@@ -4,7 +4,17 @@ export type DimensionKey =
   'country' | 'department' | 'jobTitle' | 'city' | 'employmentType' | 'hireYear';
 export type MeasureKey = 'headcount' | 'salaryUsd' | 'tenureYears';
 export type AggregationKey = 'count' | 'sum' | 'average' | 'median' | 'minimum' | 'maximum';
-export type ChartType = 'column' | 'bar' | 'line' | 'donut' | 'table';
+export type ChartType =
+  | 'column'
+  | 'stackedColumn'
+  | 'bar'
+  | 'line'
+  | 'area'
+  | 'donut'
+  | 'pie'
+  | 'heatmap'
+  | 'kpi'
+  | 'table';
 export type WidgetSize = 'small' | 'medium' | 'large';
 
 export interface WidgetConfig {
@@ -47,9 +57,14 @@ export const AGGREGATIONS: { key: AggregationKey; label: string }[] = [
 
 export const CHART_TYPES: { key: ChartType; label: string }[] = [
   { key: 'column', label: 'Column' },
+  { key: 'stackedColumn', label: 'Stacked column' },
   { key: 'bar', label: 'Bar' },
   { key: 'line', label: 'Line' },
+  { key: 'area', label: 'Area' },
   { key: 'donut', label: 'Donut' },
+  { key: 'pie', label: 'Pie' },
+  { key: 'heatmap', label: 'Heatmap' },
+  { key: 'kpi', label: 'Single number' },
   { key: 'table', label: 'Table' },
 ];
 
@@ -152,4 +167,31 @@ export function niceTicks(max: number): number[] {
   const step = nice * magnitude;
   const count = Math.ceil(max / step);
   return Array.from({ length: count + 1 }, (_, i) => Math.round(i * step * 100) / 100);
+}
+
+/**
+ * One headline figure for the whole chart, or null when the aggregation can not be combined honestly
+ * (a median of group medians is not the median of everyone).
+ */
+export function kpiValue(model: ChartModel, aggregation: AggregationKey): number | null {
+  const points = model.series.flatMap((s) =>
+    s.values.map((value, index) => ({ value, count: s.counts[index] })),
+  );
+  const filled = points.filter((p) => p.count > 0);
+  if (filled.length === 0 || aggregation === 'median') {
+    return null;
+  }
+  switch (aggregation) {
+    case 'count':
+    case 'sum':
+      return points.reduce((sum, p) => sum + p.value, 0);
+    case 'minimum':
+      return Math.min(...filled.map((p) => p.value));
+    case 'maximum':
+      return Math.max(...filled.map((p) => p.value));
+    case 'average': {
+      const people = filled.reduce((sum, p) => sum + p.count, 0);
+      return filled.reduce((sum, p) => sum + p.value * p.count, 0) / people;
+    }
+  }
 }

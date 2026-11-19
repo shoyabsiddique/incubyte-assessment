@@ -203,3 +203,69 @@
 .chart-table .num {
   text-align: right;
 }
+
+.area {
+  fill-opacity: 0.85;
+  stroke: var(--mat-sys-surface);
+  stroke-width: 1;
+}
+
+.area.s0 {
+  fill: var(--chart-1);
+}
+.area.s1 {
+  fill: var(--chart-2);
+}
+.area.s2 {
+  fill: var(--chart-3);
+}
+.area.s3 {
+  fill: var(--chart-4);
+}
+.area.s4 {
+  fill: var(--chart-5);
+}
+.area.s5 {
+  fill: var(--chart-6);
+}
+.area.s6 {
+  fill: var(--chart-7);
+}
+.area.s7 {
+  fill: var(--chart-8);
+}
+
+.cell {
+  fill: var(--chart-1);
+}
+
+.cell-label {
+  fill: var(--mat-sys-on-surface);
+  font: var(--mat-sys-label-medium);
+  pointer-events: none;
+}
+
+.cell-label.dark {
+  fill: #ffffff;
+}
+
+.kpi {
+  padding: 24px 0;
+  text-align: center;
+}
+
+.kpi-value {
+  margin: 0;
+  font-size: 3rem;
+  font-weight: 500;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-on-surface);
+}
+
+.kpi-caption {
+  max-width: 36ch;
+  margin: 8px auto 0;
+  font: var(--mat-sys-body-medium);
+  color: var(--mat-sys-on-surface-variant);
+}

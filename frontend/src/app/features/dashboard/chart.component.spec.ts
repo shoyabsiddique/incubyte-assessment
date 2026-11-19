@@ -129,4 +129,55 @@ describe('ChartComponent', () => {
     expect(view.querySelector('svg')?.getAttribute('role')).toBe('img');
     expect(view.querySelector('svg')?.getAttribute('aria-label')).toContain('3 categories');
   });
+  it('stacks series on top of each other in a stacked column chart', () => {
+    show(TWO_SERIES, 'stackedColumn');
+
+    const bars = Array.from(view.querySelectorAll('rect.bar'));
+    expect(bars.length).toBe(4);
+    // India (first category): 200 + 100 stacked, so the two bars share an x and the second sits on the first.
+    expect(bars[0].getAttribute('x')).toBe(bars[2].getAttribute('x'));
+    const full = Number(bars[0].getAttribute('height')) + Number(bars[2].getAttribute('height'));
+    const usa = Number(bars[1].getAttribute('height')) + Number(bars[3].getAttribute('height'));
+    expect(usa).toBeGreaterThan(full);
+  });
+
+  it('draws a stacked area per series', () => {
+    show(TWO_SERIES, 'area');
+
+    expect(view.querySelectorAll('path.area').length).toBe(2);
+  });
+
+  it('draws a pie with the same slices as a donut but no hole', () => {
+    show(ONE_SERIES, 'pie');
+
+    expect(view.querySelectorAll('path.slice').length).toBe(3);
+    expect(view.querySelector('svg.pie')).not.toBeNull();
+  });
+
+  it('draws a heatmap cell for every category and series, darker for larger values', () => {
+    show(TWO_SERIES, 'heatmap');
+
+    const cells = Array.from(view.querySelectorAll('rect.cell'));
+    expect(cells.length).toBe(4);
+    const opacity = (index: number) => Number(cells[index].getAttribute('fill-opacity'));
+    // Order is category by category: India Full time (200), India Contract (100), USA Full time (500), USA Contract (100).
+    expect(opacity(2)).toBeGreaterThan(opacity(0));
+    expect(opacity(0)).toBeGreaterThan(opacity(1));
+    expect(cells[0].querySelector('title')?.textContent).toContain('India');
+  });
+
+  it('shows one headline figure for a KPI card', () => {
+    show(ONE_SERIES, 'kpi');
+
+    expect(view.querySelector('.kpi-value')?.textContent?.trim()).toBe('1,800');
+    expect(view.querySelector('.kpi-caption')?.textContent).toContain('3 categories');
+    expect(view.querySelector('svg')).toBeNull();
+  });
+
+  it('explains why a KPI of medians has no figure', () => {
+    show(ONE_SERIES, 'kpi', 'salaryUsd', 'median');
+
+    expect(view.querySelector('.kpi-value')?.textContent?.trim()).toBe('—');
+    expect(view.querySelector('.kpi-caption')?.textContent).toContain('median');
+  });
 });

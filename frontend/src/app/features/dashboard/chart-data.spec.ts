@@ -2,12 +2,15 @@ import {
   WidgetConfig,
   autoTitle,
   formatValue,
+  kpiValue,
   niceTicks,
   normalize,
   prepare,
   validAggregations,
 } from './chart-data';
 import { PivotResponse } from '../analytics/analytics.service';
+
+const solvedAverage = (10 * 1 + 40 * 3) / 4;
 
 const CONFIG: WidgetConfig = {
   id: 'w1',
@@ -41,6 +44,51 @@ const RESPONSE: PivotResponse = {
 };
 
 describe('chart data', () => {
+  describe('headline figure', () => {
+    const model = (aggregation: string) =>
+      prepare(
+        {
+          categories: [
+            { key: 'A', label: 'A' },
+            { key: 'B', label: 'B' },
+          ],
+          series: [
+            {
+              key: 'all',
+              label: 'All',
+              points: [
+                { value: '10', count: 1 },
+                { value: '40', count: 3 },
+              ],
+            },
+          ],
+        },
+        { ...CONFIG, aggregation: aggregation as never },
+      );
+
+    it('adds counts and totals', () => {
+      expect(kpiValue(model('count'), 'count')).toBe(50);
+      expect(kpiValue(model('sum'), 'sum')).toBe(50);
+    });
+
+    it('takes the smallest minimum and the largest maximum', () => {
+      expect(kpiValue(model('minimum'), 'minimum')).toBe(10);
+      expect(kpiValue(model('maximum'), 'maximum')).toBe(40);
+    });
+
+    it('weights an average by how many people each group holds', () => {
+      expect(kpiValue(model('average'), 'average')).toBe(solvedAverage);
+    });
+
+    it('has no honest single figure for a median of medians', () => {
+      expect(kpiValue(model('median'), 'median')).toBeNull();
+    });
+
+    it('is empty when nothing matched', () => {
+      expect(kpiValue({ categories: [], series: [], max: 0 }, 'sum')).toBeNull();
+    });
+  });
+
   it('titles a chart from what it shows', () => {
     expect(autoTitle(CONFIG)).toBe('Headcount by country');
     expect(

@@ -1,10 +1,13 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 import {
+  AGGREGATIONS,
+  MEASURES,
   AggregationKey,
   ChartModel,
   ChartType,
   MeasureKey,
   formatValue,
+  kpiValue,
   niceTicks,
 } from './chart-data';
 
@@ -56,7 +59,29 @@ export class ChartComponent {
     return `${this.type()} chart of ${m.categories.length} categories and ${m.series.length} series`;
   });
 
-  private readonly ticks = computed(() => niceTicks(this.model().max));
+  /** The type that decides which drawing is used: a pie is a donut without a hole, a stack is a column. */
+  protected readonly view = computed<ChartType>(() => {
+    const type = this.type();
+    return type === 'pie' ? 'donut' : type === 'stackedColumn' ? 'column' : type;
+  });
+
+  private readonly stacked = computed(
+    () => this.type() === 'stackedColumn' || this.type() === 'area',
+  );
+
+  /** The tallest a stack gets: the sum of every series in the fullest category. */
+  private readonly scaleMax = computed(() => {
+    const m = this.model();
+    if (!this.stacked()) {
+      return m.max;
+    }
+    return Math.max(
+      0,
+      ...m.categories.map((_, ci) => m.series.reduce((sum, s) => sum + s.values[ci], 0)),
+    );
+  });
+
+  private readonly ticks = computed(() => niceTicks(this.scaleMax()));
   private readonly top = computed(() => this.ticks()[this.ticks().length - 1]);
 
   private format(value: number, compact: boolean): string {
@@ -104,6 +129,23 @@ export class ChartComponent {
     const m = this.model();
     const step = this.plotWidth / m.categories.length;
     const inner = step * 0.72;
+    if (this.type() === 'stackedColumn') {
+      const below = m.categories.map(() => 0);
+      return m.series.flatMap((s, si) =>
+        s.values.map((value, ci) => {
+          const from = below[ci];
+          below[ci] += value;
+          return {
+            x: this.left + step * ci + (step - inner) / 2,
+            y: this.y(below[ci]),
+            width: inner,
+            height: Math.max(0, this.y(from) - this.y(below[ci])),
+            series: si,
+            tip: this.tip(m.categories[ci].label, s.label, value),
+          };
+        }),
+      );
+    }
     const barWidth = inner / m.series.length;
     return m.series.flatMap((s, si) =>
       s.values.map((value, ci) => ({
@@ -127,6 +169,20 @@ export class ChartComponent {
         tip: this.tip(m.categories[ci].label, s.label, value),
       }));
       return { series: si, points, path: points.map((p) => `${p.x},${p.y}`).join(' ') };
+    });
+  });
+
+  protected readonly areas = computed(() => {
+    const m = this.model();
+    const step = this.plotWidth / m.categories.length;
+    const below = m.categories.map(() => 0);
+    return m.series.map((s, si) => {
+      const lower = [...below];
+      const upper = s.values.map((value, ci) => (below[ci] += value));
+      const x = (ci: number) => this.left + step * ci + step / 2;
+      const forward = upper.map((v, ci) => `${x(ci)},${this.y(v)}`);
+      const back = lower.map((v, ci) => `${x(ci)},${this.y(v)}`).reverse();
+      return { series: si, path: `M ${[...forward, ...back].join(' L ')} Z` };
     });
   });
 
@@ -188,7 +244,8 @@ export class ChartComponent {
     return series.values.map((value, index) => {
       const share = value / total;
       const sweep = share * Math.PI * 2;
-      const path = ring(110, 110, 100, 62, angle, angle + Math.min(sweep, Math.PI * 2 - 0.0001));
+      const hole = this.type() === 'pie' ? 0 : 62;
+      const path = ring(110, 110, 100, hole, angle, angle + Math.min(sweep, Math.PI * 2 - 0.0001));
       angle += sweep;
       return { path, series: index, label: m.categories[index].label, share };
     });
@@ -202,6 +259,60 @@ export class ChartComponent {
     const value = this.model().series[0].values[slice.series];
     return `${slice.label}: ${this.format(value, false)} (${this.percent(slice.share)})`;
   }
+
+  // ---- heatmap -------------------------------------------------------------------------------
+  protected readonly heatTop = 34;
+  protected readonly heatLeft = 150;
+
+  protected readonly heat = computed(() => {
+    const m = this.model();
+    const cell = Math.min(110, (WIDTH - this.heatLeft - 12) / m.series.length);
+    const rowHeight = 26;
+    const max = m.max || 1;
+    const cells = m.categories.flatMap((c, ci) =>
+      m.series.map((s, si) => {
+        const value = s.values[ci];
+        const opacity = Math.round((0.1 + 0.9 * (value / max)) * 100) / 100;
+        return {
+          x: this.heatLeft + cell * si,
+          y: this.heatTop + rowHeight * ci,
+          width: cell - 2,
+          height: rowHeight - 2,
+          opacity,
+          label: this.format(value, true),
+          dark: opacity > 0.55,
+          tip: this.tip(c.label, s.label, value),
+        };
+      }),
+    );
+    return {
+      cells,
+      height: this.heatTop + rowHeight * m.categories.length + 8,
+      columns: m.series.map((s, si) => ({
+        label: s.label,
+        x: this.heatLeft + cell * si + cell / 2,
+      })),
+      rows: m.categories.map((c, ci) => ({
+        label: c.label,
+        y: this.heatTop + rowHeight * ci + rowHeight / 2 + 4,
+      })),
+    };
+  });
+
+  // ---- single number --------------------------------------------------------------------------
+  protected readonly kpi = computed(() => {
+    const value = kpiValue(this.model(), this.aggregation());
+    const measure = MEASURES.find((m) => m.key === this.measure())!.label;
+    const aggregation = AGGREGATIONS.find((a) => a.key === this.aggregation())!.label;
+    const categories = this.model().categories.length;
+    return {
+      text: value === null ? '—' : this.format(value, false),
+      caption:
+        this.aggregation() === 'median'
+          ? 'A median can not be combined across groups; pick another aggregation for a single number.'
+          : `${this.measure() === 'headcount' ? measure : `${aggregation} ${measure.toLowerCase()}`} across ${categories} categories`,
+    };
+  });
 
   // ---- table ---------------------------------------------------------------------------------------
   protected cell(seriesIndex: number, categoryIndex: number): string {

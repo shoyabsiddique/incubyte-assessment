@@ -156,8 +156,8 @@
           </select>
         </label>
       </div>
-      @if (config().chart === 'donut' && config().series) {
-        <p class="hint">A donut shows one series; the first is used.</p>
+      @if ((config().chart === 'donut' || config().chart === 'pie') && config().series) {
+        <p class="hint">A donut or pie shows one series; the first is used.</p>
       }
     </section>
   }

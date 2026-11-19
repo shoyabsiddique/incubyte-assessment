@@ -1,7 +1,7 @@
 @if (empty()) {
   <p class="empty">No data for this chart with the current filters.</p>
 } @else {
-  @switch (type()) {
+  @switch (view()) {
     @case ('column') {
       <svg
         class="chart"
@@ -90,6 +90,90 @@
         }
       </svg>
     }
+    @case ('area') {
+      <svg
+        class="chart"
+        role="img"
+        [attr.aria-label]="summary()"
+        [attr.viewBox]="'0 0 ' + width + ' ' + vHeight"
+      >
+        @for (tick of valueTicks(); track tick.position) {
+          <line
+            class="grid"
+            [attr.x1]="56"
+            [attr.x2]="width - 12"
+            [attr.y1]="tick.position"
+            [attr.y2]="tick.position"
+          />
+          <text class="tick" [attr.x]="50" [attr.y]="tick.position + 4" text-anchor="end">
+            {{ tick.label }}
+          </text>
+        }
+        @for (area of areas(); track area.series) {
+          <path [class]="'area ' + colour(area.series)" [attr.d]="area.path" />
+        }
+        @for (c of categoryCentres(); track c.x) {
+          <text
+            class="category"
+            [attr.x]="c.x"
+            [attr.y]="vHeight - bottom() + 16"
+            [attr.text-anchor]="rotate() ? 'end' : 'middle'"
+            [attr.transform]="
+              rotate() ? 'rotate(-40 ' + c.x + ' ' + (vHeight - bottom() + 16) + ')' : null
+            "
+          >
+            {{ shorten(c.label) }}
+          </text>
+        }
+      </svg>
+    }
+    @case ('heatmap') {
+      <svg
+        class="chart"
+        role="img"
+        [attr.aria-label]="summary()"
+        [attr.viewBox]="'0 0 ' + width + ' ' + heat().height"
+      >
+        @for (column of heat().columns; track column.x) {
+          <text class="category" [attr.x]="column.x" y="22" text-anchor="middle">
+            {{ shorten(column.label) }}
+          </text>
+        }
+        @for (row of heat().rows; track row.y) {
+          <text class="category" [attr.x]="heatLeft - 8" [attr.y]="row.y" text-anchor="end">
+            {{ shorten(row.label) }}
+          </text>
+        }
+        @for (cell of heat().cells; track $index) {
+          <rect
+            class="cell"
+            [attr.x]="cell.x"
+            [attr.y]="cell.y"
+            [attr.width]="cell.width"
+            [attr.height]="cell.height"
+            [attr.fill-opacity]="cell.opacity"
+            rx="2"
+          >
+            <title>{{ cell.tip }}</title>
+          </rect>
+          <text
+            class="cell-label"
+            [class.dark]="cell.dark"
+            [attr.x]="cell.x + cell.width / 2"
+            [attr.y]="cell.y + cell.height / 2 + 4"
+            text-anchor="middle"
+          >
+            {{ cell.label }}
+          </text>
+        }
+      </svg>
+    }
+    @case ('kpi') {
+      <div class="kpi">
+        <p class="kpi-value">{{ kpi().text }}</p>
+        <p class="kpi-caption">{{ kpi().caption }}</p>
+      </div>
+    }
     @case ('bar') {
       <svg
         class="chart"
@@ -134,7 +218,13 @@
     }
     @case ('donut') {
       <div class="donut">
-        <svg class="chart ring" role="img" [attr.aria-label]="summary()" viewBox="0 0 220 220">
+        <svg
+          class="chart ring"
+          [class.pie]="type() === 'pie'"
+          role="img"
+          [attr.aria-label]="summary()"
+          viewBox="0 0 220 220"
+        >
           @for (slice of slices(); track slice.series) {
             <path [class]="'slice ' + colour(slice.series)" [attr.d]="slice.path">
               <title>{{ sliceTip(slice) }}</title>
@@ -176,7 +266,13 @@
       </div>
     }
   }
-  @if (multiple() && type() !== 'table' && type() !== 'donut') {
+  @if (
+    multiple() &&
+    view() !== 'table' &&
+    view() !== 'donut' &&
+    view() !== 'heatmap' &&
+    view() !== 'kpi'
+  ) {
     <ul class="legend">
       @for (s of model().series; track s.key; let si = $index) {
         <li>
