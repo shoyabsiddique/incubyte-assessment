@@ -1,0 +1,190 @@
+<article class="widget">
+  <header class="head">
+    <span class="handle" cdkDragHandle aria-hidden="true" title="Drag to move this chart">
+      <mat-icon>drag_indicator</mat-icon>
+    </span>
+    <h3 class="widget-title">{{ title() }}</h3>
+    <div class="actions">
+      <button
+        mat-icon-button
+        class="configure"
+        type="button"
+        [attr.aria-expanded]="editing()"
+        aria-label="Configure this chart"
+        (click)="editing.set(!editing())"
+      >
+        <mat-icon>tune</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        class="move-earlier"
+        type="button"
+        aria-label="Move this chart earlier"
+        [disabled]="first()"
+        (click)="moved.emit(-1)"
+      >
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        class="move-later"
+        type="button"
+        aria-label="Move this chart later"
+        [disabled]="last()"
+        (click)="moved.emit(1)"
+      >
+        <mat-icon>arrow_forward</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        class="remove"
+        type="button"
+        aria-label="Remove this chart"
+        (click)="removed.emit()"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </header>
+
+  @if (editing()) {
+    <section class="panel" aria-label="Chart settings">
+      <div class="types" role="group" aria-label="Chart type">
+        @for (type of chartTypes; track type.key) {
+          <button
+            mat-stroked-button
+            class="chart-type"
+            type="button"
+            [attr.data-chart]="type.key"
+            [attr.aria-pressed]="config().chart === type.key"
+            [class.active]="config().chart === type.key"
+            (click)="setChart(type.key)"
+          >
+            {{ type.label }}
+          </button>
+        }
+      </div>
+      <div class="wells">
+        <label
+          class="well well-x"
+          [class.over]="hover() === 'x'"
+          (dragover)="allow($event, 'x')"
+          (dragleave)="leave()"
+          (drop)="drop($event, 'x')"
+        >
+          <span class="well-label">X axis</span>
+          <select name="x" (change)="setX($any($event.target).value)">
+            @for (d of dimensions; track d.key) {
+              <option [value]="d.key" [selected]="config().x === d.key">{{ d.label }}</option>
+            }
+          </select>
+        </label>
+        <label
+          class="well well-series"
+          [class.over]="hover() === 'series'"
+          (dragover)="allow($event, 'series')"
+          (dragleave)="leave()"
+          (drop)="drop($event, 'series')"
+        >
+          <span class="well-label">Series (split by)</span>
+          <select name="series" (change)="setSeries($any($event.target).value)">
+            <option value="" [selected]="config().series === null">None</option>
+            @for (d of dimensions; track d.key) {
+              @if (d.key !== config().x) {
+                <option [value]="d.key" [selected]="config().series === d.key">
+                  {{ d.label }}
+                </option>
+              }
+            }
+          </select>
+        </label>
+        <div
+          class="well well-value"
+          [class.over]="hover() === 'value'"
+          (dragover)="allow($event, 'value')"
+          (dragleave)="leave()"
+          (drop)="drop($event, 'value')"
+        >
+          <label>
+            <span class="well-label">Value</span>
+            <select name="measure" (change)="setMeasure($any($event.target).value)">
+              @for (m of measures; track m.key) {
+                <option [value]="m.key" [selected]="config().measure === m.key">
+                  {{ m.label }}
+                </option>
+              }
+            </select>
+          </label>
+          <label>
+            <span class="well-label">Combine by</span>
+            <select name="aggregation" (change)="setAggregation($any($event.target).value)">
+              @for (a of aggregations(); track a.key) {
+                <option [value]="a.key" [selected]="config().aggregation === a.key">
+                  {{ a.label }}
+                </option>
+              }
+            </select>
+          </label>
+        </div>
+      </div>
+      <div class="options">
+        <label>
+          <span class="well-label">Sort</span>
+          <select name="sort" (change)="setSort($any($event.target).value)">
+            <option value="label" [selected]="config().sort === 'label'">By category</option>
+            <option value="value" [selected]="config().sort === 'value'">
+              By value, highest first
+            </option>
+          </select>
+        </label>
+        <label>
+          <span class="well-label">Show</span>
+          <select name="top" (change)="setTop($any($event.target).value)">
+            @for (t of tops; track t) {
+              <option [value]="t" [selected]="config().top === t">
+                {{ t === 0 ? 'All' : 'Top ' + t }}
+              </option>
+            }
+          </select>
+        </label>
+        <label>
+          <span class="well-label">Width</span>
+          <select name="size" (change)="setSize($any($event.target).value)">
+            <option value="small" [selected]="config().size === 'small'">Small</option>
+            <option value="medium" [selected]="config().size === 'medium'">Medium</option>
+            <option value="large" [selected]="config().size === 'large'">Full width</option>
+          </select>
+        </label>
+      </div>
+      @if (config().chart === 'donut' && config().series) {
+        <p class="hint">A donut shows one series; the first is used.</p>
+      }
+    </section>
+  }
+
+  <div class="body">
+    @switch (state().status) {
+      @case ('loading') {
+        <mat-progress-bar mode="indeterminate" aria-label="Loading this chart"></mat-progress-bar>
+      }
+      @case ('error') {
+        <div class="banner" role="alert">
+          <p>This chart could not be loaded.</p>
+          <button mat-stroked-button class="retry" type="button" (click)="retry()">
+            Try again
+          </button>
+        </div>
+      }
+      @default {
+        @if (model(); as m) {
+          <app-chart
+            [model]="m"
+            [type]="config().chart"
+            [measure]="config().measure"
+            [aggregation]="config().aggregation"
+          />
+        }
+      }
+    }
+  </div>
+</article>

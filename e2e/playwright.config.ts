@@ -7,6 +7,8 @@ export default defineConfig({
   testDir: './tests',
   timeout: 60_000,
   expect: { timeout: 15_000 },
+  // The dev server compiles pages on first visit, so two workers is steadier than one per core.
+  workers: 2,
   retries: process.env['CI'] ? 1 : 0,
   reporter: process.env['CI'] ? [['github'], ['list']] : 'list',
   use: {

@@ -218,3 +218,29 @@ a:focus-visible {
   color: var(--mat-sys-on-surface-variant);
   border: 1px solid var(--mat-sys-outline-variant);
 }
+
+// Categorical chart colours (the colour-blind-safe Okabe-Ito set) used for chart series.
+:root {
+  --chart-1: #0072b2;
+  --chart-2: #e69f00;
+  --chart-3: #009e73;
+  --chart-4: #d55e00;
+  --chart-5: #56b4e9;
+  --chart-6: #cc79a7;
+  --chart-7: #b8a400;
+  --chart-8: #6b7280;
+}
+
+// A dashboard chart being dragged (the preview lives outside the page, so the styles are global).
+.cdk-drag-preview {
+  box-shadow: var(--mat-sys-level2);
+  border-radius: 8px;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}

@@ -1,0 +1,189 @@
+@if (empty()) {
+  <p class="empty">No data for this chart with the current filters.</p>
+} @else {
+  @switch (type()) {
+    @case ('column') {
+      <svg
+        class="chart"
+        role="img"
+        [attr.aria-label]="summary()"
+        [attr.viewBox]="'0 0 ' + width + ' ' + vHeight"
+      >
+        @for (tick of valueTicks(); track tick.position) {
+          <line
+            class="grid"
+            [attr.x1]="56"
+            [attr.x2]="width - 12"
+            [attr.y1]="tick.position"
+            [attr.y2]="tick.position"
+          />
+          <text class="tick" [attr.x]="50" [attr.y]="tick.position + 4" text-anchor="end">
+            {{ tick.label }}
+          </text>
+        }
+        @for (bar of columns(); track $index) {
+          <rect
+            class="bar"
+            [class]="'bar ' + colour(bar.series)"
+            [attr.x]="bar.x"
+            [attr.y]="bar.y"
+            [attr.width]="bar.width"
+            [attr.height]="bar.height"
+          >
+            <title>{{ bar.tip }}</title>
+          </rect>
+        }
+        @for (c of categoryCentres(); track c.x) {
+          <text
+            class="category"
+            [attr.x]="c.x"
+            [attr.y]="vHeight - bottom() + 16"
+            [attr.text-anchor]="rotate() ? 'end' : 'middle'"
+            [attr.transform]="
+              rotate() ? 'rotate(-40 ' + c.x + ' ' + (vHeight - bottom() + 16) + ')' : null
+            "
+          >
+            {{ shorten(c.label) }}
+          </text>
+        }
+      </svg>
+    }
+    @case ('line') {
+      <svg
+        class="chart"
+        role="img"
+        [attr.aria-label]="summary()"
+        [attr.viewBox]="'0 0 ' + width + ' ' + vHeight"
+      >
+        @for (tick of valueTicks(); track tick.position) {
+          <line
+            class="grid"
+            [attr.x1]="56"
+            [attr.x2]="width - 12"
+            [attr.y1]="tick.position"
+            [attr.y2]="tick.position"
+          />
+          <text class="tick" [attr.x]="50" [attr.y]="tick.position + 4" text-anchor="end">
+            {{ tick.label }}
+          </text>
+        }
+        @for (line of lines(); track line.series) {
+          <polyline [class]="'line ' + colour(line.series)" [attr.points]="line.path" fill="none" />
+          @for (p of line.points; track $index) {
+            <circle [class]="'dot ' + colour(line.series)" [attr.cx]="p.x" [attr.cy]="p.y" r="3.5">
+              <title>{{ p.tip }}</title>
+            </circle>
+          }
+        }
+        @for (c of categoryCentres(); track c.x) {
+          <text
+            class="category"
+            [attr.x]="c.x"
+            [attr.y]="vHeight - bottom() + 16"
+            [attr.text-anchor]="rotate() ? 'end' : 'middle'"
+            [attr.transform]="
+              rotate() ? 'rotate(-40 ' + c.x + ' ' + (vHeight - bottom() + 16) + ')' : null
+            "
+          >
+            {{ shorten(c.label) }}
+          </text>
+        }
+      </svg>
+    }
+    @case ('bar') {
+      <svg
+        class="chart"
+        role="img"
+        [attr.aria-label]="summary()"
+        [attr.viewBox]="'0 0 ' + width + ' ' + hHeight()"
+      >
+        @for (tick of hTicks(); track tick.position) {
+          <line
+            class="grid"
+            [attr.x1]="tick.position"
+            [attr.x2]="tick.position"
+            [attr.y1]="8"
+            [attr.y2]="hHeight() - hBottom"
+          />
+          <text
+            class="tick"
+            [attr.x]="tick.position"
+            [attr.y]="hHeight() - 10"
+            text-anchor="middle"
+          >
+            {{ tick.label }}
+          </text>
+        }
+        @for (row of rows(); track row.y) {
+          <text class="category" [attr.x]="hLeft - 8" [attr.y]="row.middle" text-anchor="end">
+            {{ shorten(row.label) }}
+          </text>
+        }
+        @for (bar of hBars(); track $index) {
+          <rect
+            [class]="'bar ' + colour(bar.series)"
+            [attr.x]="bar.x"
+            [attr.y]="bar.y"
+            [attr.width]="bar.width"
+            [attr.height]="bar.height"
+          >
+            <title>{{ bar.tip }}</title>
+          </rect>
+        }
+      </svg>
+    }
+    @case ('donut') {
+      <div class="donut">
+        <svg class="chart ring" role="img" [attr.aria-label]="summary()" viewBox="0 0 220 220">
+          @for (slice of slices(); track slice.series) {
+            <path [class]="'slice ' + colour(slice.series)" [attr.d]="slice.path">
+              <title>{{ sliceTip(slice) }}</title>
+            </path>
+          }
+        </svg>
+        <ul class="legend">
+          @for (slice of slices(); track slice.series) {
+            <li>
+              <span [class]="'swatch ' + colour(slice.series)"></span>
+              {{ slice.label }} <span class="share">{{ percent(slice.share) }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+    @case ('table') {
+      <div class="table-scroll">
+        <table class="chart-table">
+          <thead>
+            <tr>
+              <th scope="col">Category</th>
+              @for (s of model().series; track s.key) {
+                <th scope="col" class="num">{{ s.label }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of model().categories; track c.key; let ci = $index) {
+              <tr>
+                <th scope="row">{{ c.label }}</th>
+                @for (s of model().series; track s.key; let si = $index) {
+                  <td class="num">{{ cell(si, ci) }}</td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+  @if (multiple() && type() !== 'table' && type() !== 'donut') {
+    <ul class="legend">
+      @for (s of model().series; track s.key; let si = $index) {
+        <li>
+          <span [class]="'swatch ' + colour(si)"></span>
+          {{ s.label }}
+        </li>
+      }
+    </ul>
+  }
+}

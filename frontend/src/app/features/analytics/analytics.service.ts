@@ -76,6 +76,36 @@ export interface AnomalyPage {
   totalPages: number;
 }
 
+export interface PivotCategory {
+  key: string;
+  label: string;
+}
+
+export interface PivotPoint {
+  /** The aggregated value as plain decimal text. */
+  value: string;
+  /** How many people the value covers; zero means nobody fell in this cell. */
+  count: number;
+}
+
+export interface PivotSeries {
+  key: string;
+  label: string;
+  points: PivotPoint[];
+}
+
+export interface PivotResponse {
+  categories: PivotCategory[];
+  series: PivotSeries[];
+}
+
+export interface PivotQuery {
+  x: string;
+  series: string | null;
+  measure: string;
+  aggregation: string;
+}
+
 /** Talks to the pay analytics API. Every figure is calculated by the server. */
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
@@ -106,6 +136,22 @@ export class AnalyticsService {
       }
     }
     return this.http.get<AnomalyPage>(`${this.config.apiBaseUrl}/analytics/anomalies`, { params });
+  }
+
+  pivot(query: PivotQuery, filters: StatsFilters): Observable<PivotResponse> {
+    let params = new HttpParams()
+      .set('x', query.x)
+      .set('measure', query.measure)
+      .set('aggregation', query.aggregation);
+    if (query.series) {
+      params = params.set('series', query.series);
+    }
+    for (const [name, value] of Object.entries(filters)) {
+      if (value.trim()) {
+        params = params.set(name, value.trim());
+      }
+    }
+    return this.http.get<PivotResponse>(`${this.config.apiBaseUrl}/analytics/pivot`, { params });
   }
 
   payExtremes(department: string, n: number): Observable<{ departments: DepartmentExtremes[] }> {

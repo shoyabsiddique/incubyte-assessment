@@ -1,0 +1,205 @@
+:host {
+  display: block;
+}
+
+.chart {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ring {
+  max-width: 220px;
+}
+
+.grid {
+  stroke: var(--mat-sys-outline-variant);
+  stroke-width: 1;
+}
+
+.tick,
+.category {
+  fill: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-medium);
+}
+
+.bar,
+.slice {
+  stroke: var(--mat-sys-surface);
+  stroke-width: 1;
+}
+
+.bar:hover,
+.slice:hover {
+  filter: brightness(0.92);
+}
+
+.line {
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.dot {
+  stroke: var(--mat-sys-surface);
+  stroke-width: 1.5;
+}
+
+// Eight steps of one validated categorical palette: distinguishable by hue and by lightness.
+.bar.s0,
+.slice.s0,
+.dot.s0,
+.swatch.s0 {
+  fill: var(--chart-1);
+  background: var(--chart-1);
+}
+.bar.s1,
+.slice.s1,
+.dot.s1,
+.swatch.s1 {
+  fill: var(--chart-2);
+  background: var(--chart-2);
+}
+.bar.s2,
+.slice.s2,
+.dot.s2,
+.swatch.s2 {
+  fill: var(--chart-3);
+  background: var(--chart-3);
+}
+.bar.s3,
+.slice.s3,
+.dot.s3,
+.swatch.s3 {
+  fill: var(--chart-4);
+  background: var(--chart-4);
+}
+.bar.s4,
+.slice.s4,
+.dot.s4,
+.swatch.s4 {
+  fill: var(--chart-5);
+  background: var(--chart-5);
+}
+.bar.s5,
+.slice.s5,
+.dot.s5,
+.swatch.s5 {
+  fill: var(--chart-6);
+  background: var(--chart-6);
+}
+.bar.s6,
+.slice.s6,
+.dot.s6,
+.swatch.s6 {
+  fill: var(--chart-7);
+  background: var(--chart-7);
+}
+.bar.s7,
+.slice.s7,
+.dot.s7,
+.swatch.s7 {
+  fill: var(--chart-8);
+  background: var(--chart-8);
+}
+.line.s0 {
+  stroke: var(--chart-1);
+}
+.line.s1 {
+  stroke: var(--chart-2);
+}
+.line.s2 {
+  stroke: var(--chart-3);
+}
+.line.s3 {
+  stroke: var(--chart-4);
+}
+.line.s4 {
+  stroke: var(--chart-5);
+}
+.line.s5 {
+  stroke: var(--chart-6);
+}
+.line.s6 {
+  stroke: var(--chart-7);
+}
+.line.s7 {
+  stroke: var(--chart-8);
+}
+
+// The swatch is a box, not an SVG shape, so it takes the background colour only.
+.swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 2px;
+  fill: none;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.donut {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+}
+
+.donut .legend {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  margin: 0;
+}
+
+.share {
+  margin-left: 4px;
+  color: var(--mat-sys-on-surface);
+  font-weight: 500;
+}
+
+.empty {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.table-scroll {
+  max-height: 320px;
+  overflow: auto;
+}
+
+.chart-table {
+  width: 100%;
+  border-collapse: collapse;
+  font: var(--mat-sys-body-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-table th,
+.chart-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  text-align: left;
+}
+
+.chart-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--mat-sys-surface-container-low);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+}
+
+.chart-table .num {
+  text-align: right;
+}

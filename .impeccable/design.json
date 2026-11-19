@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-19T00:00:00Z",
+  "title": "Design System: ACME Salary Management",
+  "extensions": {
+    "colorMeta": {
+      "primary": { "role": "primary", "displayName": "Azure Ink", "canonical": "#005cbb", "tonalRamp": ["#00294f", "#00458f", "#005cbb", "#2f78d0", "#5b95e6", "#8bb2f2", "#abc7ff", "#d7e3ff"] },
+      "tertiary": { "role": "tertiary", "displayName": "Signal Indigo", "canonical": "#343dff", "tonalRamp": ["#000a8f", "#1b1fdb", "#343dff", "#5a63ff", "#7f87ff", "#9fa5ff", "#bec2ff", "#e0e0ff"] },
+      "surface": { "role": "neutral", "displayName": "Paper", "canonical": "#faf9fd", "tonalRamp": ["#1a1b1f", "#2f3033", "#44474e", "#74777f", "#a8a9b0", "#c4c6d0", "#f4f3f6", "#faf9fd"] },
+      "error": { "role": "error", "displayName": "Alarm Red", "canonical": "#ba1a1a", "tonalRamp": ["#410002", "#690005", "#93000a", "#ba1a1a", "#de3730", "#ff5449", "#ffb4ab", "#ffdad6"] }
+    },
+    "typographyMeta": {
+      "headline": { "displayName": "Headline", "purpose": "The single h2 of each page." },
+      "title": { "displayName": "Title", "purpose": "Section headings." },
+      "body": { "displayName": "Body", "purpose": "Tables, forms and prose." },
+      "label": { "displayName": "Label", "purpose": "Filter labels, table headers, captions." }
+    },
+    "shadows": [
+      { "name": "level-1", "value": "0px 2px 1px -1px rgba(0,0,0,.2), 0px 1px 1px 0px rgba(0,0,0,.14), 0px 1px 3px 0px rgba(0,0,0,.12)", "purpose": "Floating layers such as menus and select panels." }
+    ],
+    "motion": [
+      { "name": "state", "value": "150ms to 250ms, standard Material easing", "purpose": "State changes only: hover, focus, drawer open and close." }
+    ],
+    "breakpoints": [
+      { "name": "drawer", "value": "900px" },
+      { "name": "compact", "value": "600px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Filter control",
+      "kind": "input",
+      "refersTo": "filter-control",
+      "description": "Native select used in the filter row above data tables.",
+      "html": "<label class=\"ds-field\">Country<select class=\"ds-select\"><option>All countries</option><option>India</option></select></label>",
+      "css": ".ds-field{display:flex;flex-direction:column;gap:4px;font:500 .75rem/1rem Roboto,sans-serif;color:#44474e}.ds-select{min-width:180px;min-height:40px;padding:6px 10px;font:400 .875rem/1.25rem Roboto,sans-serif;color:#1a1b1f;background:#faf9fd;border:1px solid #74777f;border-radius:4px}.ds-select:hover{border-color:#1a1b1f}.ds-select:focus-visible{outline:2px solid #005cbb;outline-offset:1px;border-color:#005cbb}"
+    },
+    {
+      "name": "Table frame",
+      "kind": "custom",
+      "refersTo": "table-frame",
+      "description": "Bordered scroll container for data tables with right-aligned figures.",
+      "html": "<div class=\"ds-table-frame\"><table class=\"ds-table\"><thead><tr><th>Group</th><th class=\"ds-num\">Average</th></tr></thead><tbody><tr><td>India</td><td class=\"ds-num\">29,602.42 USD</td></tr></tbody></table></div>",
+      "css": ".ds-table-frame{overflow-x:auto;border:1px solid #c4c6d0;border-radius:8px}.ds-table{width:100%;border-collapse:collapse;font:400 .875rem/1.25rem Roboto,sans-serif;font-variant-numeric:tabular-nums}.ds-table th{padding:10px 16px;text-align:left;font-weight:500;color:#44474e;background:#f4f3f6;white-space:nowrap}.ds-table td{padding:10px 16px;border-top:1px solid #c4c6d0}.ds-num{text-align:right}"
+    },
+    {
+      "name": "Error banner",
+      "kind": "custom",
+      "refersTo": "banner",
+      "description": "Error that needs action, with a retry inside.",
+      "html": "<p class=\"ds-banner\" role=\"alert\">The pay statistics could not be loaded.</p>",
+      "css": ".ds-banner{margin:0;padding:8px 12px;border-radius:8px;background:#ffdad6;color:#410002;font:400 .875rem/1.25rem Roboto,sans-serif}"
+    },
+    {
+      "name": "Confirmation notice",
+      "kind": "custom",
+      "refersTo": "notice",
+      "description": "Confirmation after a successful change.",
+      "html": "<p class=\"ds-notice\" role=\"status\">INR rate saved.</p>",
+      "css": ".ds-notice{margin:0;padding:8px 12px;border-radius:8px;background:#dae2f9;color:#131c2b;font:400 .875rem/1.25rem Roboto,sans-serif}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Ledger",
+    "overview": "The interface is an instrument for reading and correcting money: precise, orderly and trustworthy. Figures are aligned in columns, units sit next to every amount, dates are written the same way everywhere, and what changed is always visible afterwards.",
+    "keyCharacteristics": [
+      "Neutral surfaces, one blue accent used for primary actions, the current navigation item and focus.",
+      "Right-aligned, tabular figures; sentence-case labels; amounts always followed by their currency code.",
+      "One shared page vocabulary: heading, one-sentence intro, filter row, data table, feedback blocks.",
+      "Meaning is never carried by colour alone: deviations carry a sign, statuses carry words."
+    ],
+    "rules": [
+      { "name": "The One Voice Rule", "body": "Azure is the only accent. It marks what can be acted on or what is current; it is never decoration.", "section": "colors" },
+      { "name": "The Sign Before Colour Rule", "body": "Anything coloured to mean above or below must also say it in text.", "section": "colors" },
+      { "name": "The Tabular Figures Rule", "body": "Every table and definition list uses tabular numerals so amounts line up and do not jiggle when they change.", "section": "typography" }
+    ],
+    "dos": [
+      "Do put the currency code after every amount and format with two decimals and thousands separators.",
+      "Do keep one vocabulary: the same filter row, table frame, banner and notice on every page.",
+      "Do keep keyboard focus visible on every control and link.",
+      "Do pair any colour meaning with a sign or a word."
+    ],
+    "donts": [
+      "Don't add a second accent colour or use azure as decoration.",
+      "Don't use shadows at rest on flat surfaces; reserve them for floating layers.",
+      "Don't introduce display fonts, gradients, glows or decorative motion in an operational screen.",
+      "Don't style a one-off control on a single page when a shared style exists."
+    ]
+  }
+}
