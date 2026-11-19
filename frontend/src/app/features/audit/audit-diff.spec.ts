@@ -101,6 +101,20 @@ describe('describeChanges', () => {
   it('has nothing to show when there is no payload', () => {
     expect(describeChanges(entry({}))).toEqual([]);
   });
+
+  it("writes money the way the caller asks, so the viewer's format applies", () => {
+    const changes = describeChanges(
+      entry({
+        entityType: 'COMPENSATION_RECORD',
+        operation: 'REVISE',
+        before: { amount: { amount: '100000.00', currency: 'AUD' } },
+        after: { amount: { amount: '120000.00', currency: 'AUD' } },
+      }),
+      (money) => `${money.currency} ${money.amount}`,
+    );
+
+    expect(changes).toEqual([{ field: 'Amount', before: 'AUD 100000.00', after: 'AUD 120000.00' }]);
+  });
 });
 
 describe('fieldLabel', () => {

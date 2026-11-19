@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { FORMAT_KEY, MoneyFormatService } from '../../core/format/money-format.service';
 import { ChartComponent } from './chart.component';
 import { ChartModel, ChartType } from './chart-data';
 
@@ -179,5 +180,18 @@ describe('ChartComponent', () => {
 
     expect(view.querySelector('.kpi-value')?.textContent?.trim()).toBe('—');
     expect(view.querySelector('.kpi-caption')?.textContent).toContain('median');
+  });
+  it('groups the digits of its figures the way the viewer chose', () => {
+    TestBed.inject(MoneyFormatService).setGrouping('indian');
+    const big: ChartModel = {
+      categories: [{ key: 'A', label: 'A' }],
+      series: [{ key: 'all', label: 'All', values: [1234567.5], counts: [1] }],
+      max: 1234567.5,
+    };
+
+    show(big, 'table', 'salaryUsd', 'sum');
+
+    expect(view.querySelector('table.chart-table tbody td')?.textContent).toContain('12,34,567.50');
+    localStorage.removeItem(FORMAT_KEY);
   });
 });

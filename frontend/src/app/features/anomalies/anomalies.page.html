@@ -74,11 +74,10 @@
                   <span class="meta">{{ item.employeeId }}</span>
                 </td>
                 <td>{{ item.countryName }} · {{ item.department }} · {{ item.jobTitle }}</td>
-                <td>{{ item.salary.amount | number: '1.2-2' }} {{ item.salary.currency }}</td>
-                <td>{{ item.salaryUsd.amount | number: '1.2-2' }} {{ item.salaryUsd.currency }}</td>
+                <td>{{ item.salary | money }}</td>
+                <td>{{ item.salaryUsd | money }}</td>
                 <td>
-                  {{ item.peerMedianUsd.amount | number: '1.2-2' }}
-                  {{ item.peerMedianUsd.currency }}
+                  {{ item.peerMedianUsd | money }}
                 </td>
                 <td>{{ item.peerGroupSize }}</td>
                 <td class="deviation" [class.above]="item.direction === 'ABOVE'">

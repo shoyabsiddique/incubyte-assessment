@@ -316,3 +316,17 @@ table[mat-table] tr.mat-mdc-row:last-child td.mat-mdc-cell {
 table[mat-table] tr.mat-mdc-row:hover {
   background: var(--mat-sys-surface-container-lowest);
 }
+
+// The currency format menu lives in an overlay, so its styles are global.
+.format-menu .menu-heading {
+  margin: 8px 16px 4px;
+  font: var(--mat-sys-label-medium);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.format-menu .sample {
+  display: block;
+  font: var(--mat-sys-body-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-on-surface-variant);
+}

@@ -1,4 +1,3 @@
-import { DecimalPipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -16,6 +15,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { EmployeeService, Money, SalaryRecord } from './employee.service';
+import { MoneyFormatService } from '../../core/format/money-format.service';
+import { MoneyPipe } from '../../core/format/money.pipe';
 
 const LABELS: Record<string, string> = {
   amount: 'New salary',
@@ -26,13 +27,14 @@ const LABELS: Record<string, string> = {
 @Component({
   selector: 'app-salary-revision-form',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule],
+  imports: [MoneyPipe, ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule],
   templateUrl: './salary-revision-form.component.html',
   styleUrl: './salary-revision-form.component.scss',
 })
 export class SalaryRevisionFormComponent implements OnInit {
   private readonly service = inject(EmployeeService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly money = inject(MoneyFormatService);
 
   readonly employeeId = input.required<string>();
   readonly current = input.required<Money | null>();
@@ -59,6 +61,11 @@ export class SalaryRevisionFormComponent implements OnInit {
     });
   }
 
+  /** What the typed amount will look like once saved, in the viewer's chosen format. */
+  protected preview(): string | null {
+    return this.money.preview(this.form.controls.amount.value, this.current()?.currency ?? 'USD');
+  }
+
   protected submit(): void {
     this.generalError.set(null);
     this.conflict.set(false);
@@ -70,7 +77,7 @@ export class SalaryRevisionFormComponent implements OnInit {
     const value = this.form.getRawValue();
     this.service
       .revise(this.employeeId(), {
-        amount: value.amount.trim(),
+        amount: this.money.plain(value.amount.trim()),
         effectiveStart: value.effectiveStart,
       })
       .subscribe({

@@ -92,20 +92,19 @@
       <div>
         <dt>Current annual payroll</dt>
         <dd class="current">
-          {{ r.currentPayroll.amount | number: '1.2-2' }} {{ r.currentPayroll.currency }}
+          {{ r.currentPayroll | money }}
         </dd>
       </div>
       <div>
         <dt>Additional projected expenditure</dt>
         <dd class="additional">
-          {{ r.additionalExpenditure.amount | number: '1.2-2' }}
-          {{ r.additionalExpenditure.currency }}
+          {{ r.additionalExpenditure | money }}
         </dd>
       </div>
       <div>
         <dt>Projected annual payroll</dt>
         <dd class="projected">
-          {{ r.projectedPayroll.amount | number: '1.2-2' }} {{ r.projectedPayroll.currency }}
+          {{ r.projectedPayroll | money }}
         </dd>
       </div>
     </dl>

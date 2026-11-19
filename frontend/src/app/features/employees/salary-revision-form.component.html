@@ -1,9 +1,7 @@
 <form [formGroup]="form" (ngSubmit)="submit()" novalidate class="revision-form">
   <h3>Revise salary</h3>
   @if (current(); as salary) {
-    <p class="reference">
-      Current salary: {{ salary.amount | number: '1.2-2' }} {{ salary.currency }}
-    </p>
+    <p class="reference">Current salary: {{ salary | money }}</p>
   }
 
   @if (conflict()) {
@@ -40,6 +38,10 @@
       }}</mat-error>
     </mat-form-field>
   </div>
+
+  @if (preview(); as shown) {
+    <p class="preview">Will be shown as {{ shown }}</p>
+  }
 
   <div class="actions">
     <button mat-flat-button type="submit" [disabled]="busy()">Save revision</button>

@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, input } from '@angular/core';
+import { MoneyFormatService } from '../../core/format/money-format.service';
 import {
   AGGREGATIONS,
   MEASURES,
@@ -84,8 +85,15 @@ export class ChartComponent {
   private readonly ticks = computed(() => niceTicks(this.scaleMax()));
   private readonly top = computed(() => this.ticks()[this.ticks().length - 1]);
 
+  private readonly money = inject(MoneyFormatService);
+
   private format(value: number, compact: boolean): string {
-    return formatValue(value, this.measure(), this.aggregation(), compact);
+    if (compact) {
+      return formatValue(value, this.measure(), this.aggregation(), true);
+    }
+    // Full figures follow the viewer's digit grouping; whole numbers keep no decimals.
+    const whole = this.measure() === 'headcount' || this.aggregation() === 'count';
+    return this.money.number(value, whole ? 0 : 2);
   }
 
   private tip(category: string, series: string, value: number): string {

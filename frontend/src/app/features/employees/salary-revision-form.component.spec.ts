@@ -3,6 +3,7 @@ import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { AppConfigService } from '../../core/config/app-config.service';
 import { SalaryRecord } from './employee.service';
+import { FORMAT_KEY, MoneyFormatService } from '../../core/format/money-format.service';
 import { SalaryRevisionFormComponent } from './salary-revision-form.component';
 
 const API = 'http://api.test/api/v1';
@@ -24,6 +25,8 @@ describe('SalaryRevisionFormComponent', () => {
   let revised: SalaryRecord[];
   let reloads: number;
   let cancels: number;
+
+  afterEach(() => localStorage.removeItem(FORMAT_KEY));
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -189,5 +192,35 @@ describe('SalaryRevisionFormComponent', () => {
     (view.querySelector('button.cancel') as HTMLButtonElement).click();
 
     expect(cancels).toBe(1);
+  });
+  it('previews the new salary in the chosen format as it is typed', async () => {
+    type('amount', '120,000');
+    fixture.detectChanges();
+
+    expect(view.querySelector('.preview')?.textContent).toContain('120,000.00 AUD');
+
+    TestBed.inject(MoneyFormatService).setStyle('symbol');
+    fixture.detectChanges();
+    expect(view.querySelector('.preview')?.textContent).toContain('A$120,000.00');
+    localStorage.removeItem(FORMAT_KEY);
+  });
+
+  it('shows no preview until there is a usable amount', async () => {
+    expect(view.querySelector('.preview')).toBeNull();
+
+    type('amount', 'abc');
+    fixture.detectChanges();
+
+    expect(view.querySelector('.preview')).toBeNull();
+  });
+
+  it('accepts thousands separators and sends the plain digits', async () => {
+    type('amount', '120,000.50');
+    type('effectiveStart', '2025-01-01');
+    await submit();
+
+    const request = http.expectOne(`${API}/employees/${ID}/salary-revisions`);
+    expect(request.request.body).toEqual({ amount: '120000.50', effectiveStart: '2025-01-01' });
+    request.flush(NEW_RECORD, { status: 201, statusText: 'Created' });
   });
 });

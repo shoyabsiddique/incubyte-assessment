@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -29,6 +29,7 @@ import {
   EmployeeSummary,
   FilterOptions,
 } from './employee.service';
+import { MoneyPipe } from '../../core/format/money.pipe';
 
 const DEFAULT_ERROR = 'The employees could not be loaded.';
 
@@ -59,8 +60,8 @@ const FIRST_QUERY: EmployeeQuery = {
   selector: 'app-employees-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    MoneyPipe,
     DatePipe,
-    DecimalPipe,
     ReactiveFormsModule,
     RouterLink,
     MatButtonModule,

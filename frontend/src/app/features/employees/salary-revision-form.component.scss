@@ -23,3 +23,10 @@ h3 {
   gap: 8px;
   margin-top: 8px;
 }
+
+.preview {
+  margin: 0 0 8px;
+  font: var(--mat-sys-body-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--mat-sys-on-surface-variant);
+}

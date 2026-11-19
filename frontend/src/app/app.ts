@@ -5,12 +5,18 @@ import { map } from 'rxjs';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { APP_NAME } from './app-name';
 import { AuthService } from './core/auth/auth.service';
 import { ThemeService } from './core/theme/theme.service';
+import {
+  CurrencyStyle,
+  DigitGrouping,
+  MoneyFormatService,
+} from './core/format/money-format.service';
 
 interface NavItem {
   readonly label: string;
@@ -28,6 +34,7 @@ interface NavItem {
     MatListModule,
     MatButtonModule,
     MatIconModule,
+    MatMenuModule,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './app.html',
@@ -36,6 +43,9 @@ interface NavItem {
 export class App {
   protected readonly auth = inject(AuthService);
   protected readonly theme = inject(ThemeService);
+  protected readonly format = inject(MoneyFormatService);
+  protected readonly styles: CurrencyStyle[] = ['code', 'symbol', 'both'];
+  protected readonly groupings: DigitGrouping[] = ['international', 'indian'];
   protected readonly title = APP_NAME;
   /** Below this width the navigation becomes a drawer opened from a menu button. */
   protected readonly narrow = toSignal(

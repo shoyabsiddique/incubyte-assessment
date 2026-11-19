@@ -7,12 +7,13 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Subject, catchError, of, switchMap, tap } from 'rxjs';
 import { Anomaly, AnalyticsService } from '../analytics/analytics.service';
 import { EmployeeService, FilterOptions } from '../employees/employee.service';
+import { MoneyPipe } from '../../core/format/money.pipe';
 
 /** People whose pay is far from their peer group's median, offered for review and never as a verdict. */
 @Component({
   selector: 'app-anomalies-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, RouterLink, MatButtonModule, MatProgressBarModule],
+  imports: [MoneyPipe, DecimalPipe, RouterLink, MatButtonModule, MatProgressBarModule],
   templateUrl: './anomalies.page.html',
   styleUrl: './anomalies.page.scss',
 })

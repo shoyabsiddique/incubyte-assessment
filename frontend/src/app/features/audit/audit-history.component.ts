@@ -18,6 +18,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, of, switchMap, tap } from 'rxjs';
+import { MoneyFormatService } from '../../core/format/money-format.service';
 import { describeChanges, FieldChange } from './audit-diff';
 import { AuditEntry, AuditFilters, AuditPage, AuditService } from './audit.service';
 
@@ -55,6 +56,7 @@ const ENTITY_LABELS: Record<string, string> = {
 export class AuditHistoryComponent implements OnInit {
   private readonly service = inject(AuditService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly money = inject(MoneyFormatService);
   private readonly queries = new BehaviorSubject<AuditFilters>(FIRST);
 
   readonly employeeId = input<string | null>(null);
@@ -110,7 +112,7 @@ export class AuditHistoryComponent implements OnInit {
   }
 
   protected changes(entry: AuditEntry): FieldChange[] {
-    return describeChanges(entry);
+    return describeChanges(entry, (money) => this.money.format(money));
   }
 
   protected setFilter(name: FilterName, value: string): void {

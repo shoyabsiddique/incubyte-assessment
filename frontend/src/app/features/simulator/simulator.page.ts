@@ -6,6 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AppConfigService } from '../../core/config/app-config.service';
 import { EmployeeService, FilterOptions, Money } from '../employees/employee.service';
+import { MoneyPipe } from '../../core/format/money.pipe';
 
 type Scope = 'ORGANIZATION' | 'COUNTRY' | 'DEPARTMENT';
 
@@ -23,7 +24,7 @@ interface SimulationResult {
 @Component({
   selector: 'app-simulator-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, MatButtonModule, MatProgressBarModule],
+  imports: [MoneyPipe, DecimalPipe, MatButtonModule, MatProgressBarModule],
   templateUrl: './simulator.page.html',
   styleUrl: './simulator.page.scss',
 })

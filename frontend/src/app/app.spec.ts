@@ -147,6 +147,66 @@ describe('App shell', () => {
     });
   });
 
+  describe('currency format', () => {
+    afterEach(() => localStorage.removeItem('acme.money-format'));
+
+    async function openMenu() {
+      const { fixture, shell } = await setUp(true);
+      (shell.querySelector('button.format-toggle') as HTMLButtonElement).click();
+      fixture.detectChanges();
+      await fixture.whenStable();
+      return { fixture, shell };
+    }
+
+    it('offers a button that names the current format', async () => {
+      const { shell } = await setUp(true);
+
+      expect(shell.querySelector('button.format-toggle')?.getAttribute('aria-label')).toBe(
+        'Currency format: Code, International grouping',
+      );
+    });
+
+    it('lists every style and grouping with a sample of each', async () => {
+      await openMenu();
+
+      const options = Array.from(document.querySelectorAll('[data-option]')).map((o) =>
+        o.getAttribute('data-option'),
+      );
+      expect(options).toEqual([
+        'style:code',
+        'style:symbol',
+        'style:both',
+        'grouping:international',
+        'grouping:indian',
+      ]);
+      expect(document.querySelector('[data-option="style:symbol"]')?.textContent).toContain(
+        '₹1,234,567.50',
+      );
+    });
+
+    it('applies the chosen style and says so on the button', async () => {
+      const { fixture, shell } = await openMenu();
+
+      (document.querySelector('[data-option="style:symbol"]') as HTMLElement).click();
+      fixture.detectChanges();
+
+      expect(shell.querySelector('button.format-toggle')?.getAttribute('aria-label')).toBe(
+        'Currency format: Symbol, International grouping',
+      );
+    });
+
+    it('applies the chosen grouping', async () => {
+      const { fixture, shell } = await openMenu();
+
+      (document.querySelector('[data-option="grouping:indian"]') as HTMLElement).click();
+      fixture.detectChanges();
+
+      expect(shell.querySelector('button.format-toggle')?.getAttribute('aria-label')).toContain(
+        'Indian grouping',
+      );
+    });
+  });
+
   describe('colour theme', () => {
     afterEach(() => {
       localStorage.removeItem('acme.theme');

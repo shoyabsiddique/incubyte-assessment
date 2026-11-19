@@ -29,20 +29,24 @@ const ENUM_VALUES = new Set([
   'AUSTRALIA',
 ]);
 
+const defaultMoney: MoneyFormatter = (money) =>
+  `${Number(money.amount).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })} ${money.currency}`;
+
 function isMoney(value: unknown): value is { amount: string; currency: string } {
   return typeof value === 'object' && value !== null && 'amount' in value && 'currency' in value;
 }
 
-function format(value: unknown): string | null {
+export type MoneyFormatter = (money: { amount: string; currency: string }) => string;
+
+function format(value: unknown, formatMoney: MoneyFormatter = defaultMoney): string | null {
   if (value === null || value === undefined) {
     return null;
   }
   if (isMoney(value)) {
-    const amount = Number(value.amount).toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
-    return `${amount} ${value.currency}`;
+    return formatMoney(value);
   }
   const text = String(value);
   // Enum values (ON_LEAVE) read as words; short codes such as UK or USA stay as they are.
@@ -54,7 +58,10 @@ function format(value: unknown): string | null {
 }
 
 /** The fields an audit entry changed, each with what it was and what it became. */
-export function describeChanges(entry: AuditEntry): FieldChange[] {
+export function describeChanges(
+  entry: AuditEntry,
+  formatMoney: MoneyFormatter = defaultMoney,
+): FieldChange[] {
   const after = entry.after ?? entry.before ?? {};
   // An exchange rate entry names its currency in a field that never changes, so it is shown in the label.
   const currency = entry.entityType === 'EXCHANGE_RATE' ? (after['currency'] as string) : null;
@@ -66,7 +73,7 @@ export function describeChanges(entry: AuditEntry): FieldChange[] {
     )
     .map((field) => ({
       field: currency && field === 'rate' ? `${currency} rate` : fieldLabel(field),
-      before: format(entry.before?.[field]),
-      after: format(entry.after?.[field]),
+      before: format(entry.before?.[field], formatMoney),
+      after: format(entry.after?.[field], formatMoney),
     }));
 }

@@ -1,4 +1,3 @@
-import { DecimalPipe } from '@angular/common';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
@@ -8,12 +7,13 @@ import { Subject, catchError, of, switchMap, tap } from 'rxjs';
 import { AnalyticsService, DepartmentExtremes, RankedPerson } from '../analytics/analytics.service';
 import { Money } from '../employees/employee.service';
 import { EmployeeService } from '../employees/employee.service';
+import { MoneyPipe } from '../../core/format/money.pipe';
 
 /** The highest- and lowest-paid active employees, per department, ranked by USD equivalent. */
 @Component({
   selector: 'app-compensation-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [DecimalPipe, RouterLink, MatButtonModule, MatProgressBarModule],
+  imports: [MoneyPipe, RouterLink, MatButtonModule, MatProgressBarModule],
   templateUrl: './compensation.page.html',
   styleUrl: './compensation.page.scss',
 })

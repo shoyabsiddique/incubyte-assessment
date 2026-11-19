@@ -1,4 +1,4 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import {
   ChangeDetectionStrategy,
@@ -21,6 +21,7 @@ import { EmployeeFormComponent } from './employee-form.component';
 import { SalaryRevisionFormComponent } from './salary-revision-form.component';
 import { BehaviorSubject, catchError, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { EmployeeService, EmployeeSummary, SalaryRecord } from './employee.service';
+import { MoneyPipe } from '../../core/format/money.pipe';
 
 type Loaded = { employee: EmployeeSummary; history: SalaryRecord[] };
 type Outcome = Loaded | 'not-found' | 'error';
@@ -29,8 +30,8 @@ type Outcome = Loaded | 'not-found' | 'error';
   selector: 'app-employee-detail-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    MoneyPipe,
     DatePipe,
-    DecimalPipe,
     RouterLink,
     MatButtonModule,
     MatProgressBarModule,

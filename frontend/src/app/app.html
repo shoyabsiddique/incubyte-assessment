@@ -15,6 +15,50 @@
   <span class="spacer"></span>
   <button
     mat-icon-button
+    class="format-toggle"
+    type="button"
+    [matMenuTriggerFor]="formatMenu"
+    [attr.aria-label]="'Currency format: ' + format.summary()"
+    [title]="'Currency format: ' + format.summary()"
+  >
+    <mat-icon>payments</mat-icon>
+  </button>
+  <mat-menu #formatMenu="matMenu" class="format-menu">
+    <p class="menu-heading" role="presentation">Show amounts with</p>
+    @for (style of styles; track style) {
+      <button
+        mat-menu-item
+        role="menuitemradio"
+        [attr.aria-checked]="format.style() === style"
+        [attr.data-option]="'style:' + style"
+        (click)="format.setStyle(style)"
+      >
+        <mat-icon>{{ format.style() === style ? 'check' : '' }}</mat-icon>
+        <span>
+          {{ format.styleLabels[style] }}
+          <small class="sample">{{ format.sample(style, format.grouping()) }}</small>
+        </span>
+      </button>
+    }
+    <p class="menu-heading" role="presentation">Group digits</p>
+    @for (grouping of groupings; track grouping) {
+      <button
+        mat-menu-item
+        role="menuitemradio"
+        [attr.aria-checked]="format.grouping() === grouping"
+        [attr.data-option]="'grouping:' + grouping"
+        (click)="format.setGrouping(grouping)"
+      >
+        <mat-icon>{{ format.grouping() === grouping ? 'check' : '' }}</mat-icon>
+        <span>
+          {{ format.groupingLabels[grouping] }}
+          <small class="sample">{{ format.sample(format.style(), grouping) }}</small>
+        </span>
+      </button>
+    }
+  </mat-menu>
+  <button
+    mat-icon-button
     class="theme-toggle"
     type="button"
     [attr.aria-label]="theme.label()"
