@@ -19,7 +19,8 @@ The API runs on a free Render instance, which sleeps when idle: the first reques
 
 ## Documents
 
-- [Product requirements](_bmad-output/planning-artifacts/prds/prd-incubyte-assessment-2026-11-17/prd.md)
+- [One-page requirements](docs/requirements.md)
+- [Full product requirements (PRD)](_bmad-output/planning-artifacts/prds/prd-incubyte-assessment-2026-11-17/prd.md)
 - [Architecture spine](_bmad-output/planning-artifacts/architecture/architecture-incubyte-assessment-2026-11-17/ARCHITECTURE-SPINE.md)
 - [Epics and stories](_bmad-output/planning-artifacts/epics.md)
 - [Design notes, measurements, AI use and limitations](docs/design-notes.md)
