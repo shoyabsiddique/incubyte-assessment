@@ -11,9 +11,9 @@ A salary management tool for the HR Manager of a 10,000-employee, multi-country 
 | | |
 | --- | --- |
 | App | _to be added_ (static site on Hostinger) |
-| API | `https://api.<your-domain>` (Google Cloud VM, HTTPS through Caddy) |
-| API health | `https://api.<your-domain>/actuator/health` |
-| API documentation (Swagger) | `https://api.<your-domain>/swagger-ui/index.html` |
+| API | `https://incubyte-api.shoyabsiddique.site` (Google Cloud VM, HTTPS through Caddy) |
+| API health | `https://incubyte-api.shoyabsiddique.site/actuator/health` |
+| API documentation (Swagger) | `https://incubyte-api.shoyabsiddique.site/swagger-ui/index.html` |
 | Demo video | _to be added_ |
 | Demo login | `priya.nair@acme.example` (password set by `DEMO_HR_PASSWORD` when the seed runs) |
 
@@ -80,7 +80,7 @@ Three pieces, each hosted where it fits:
 | Piece | Where | Address |
 | --- | --- | --- |
 | Database | Hostinger MariaDB 11.4 | `srv1743.hstgr.io:3306` |
-| API | Google Cloud Compute Engine `e2-micro` (Always Free region such as `us-west1`) | `https://api.<your-domain>` |
+| API | Google Cloud Compute Engine `e2-micro` (Always Free region such as `us-west1`) | `https://incubyte-api.shoyabsiddique.site` |
 | Frontend | Hostinger static hosting (`public_html`) | `https://<your-domain>` |
 
 1. **Database (Hostinger).** Create the database and user. Enable Remote MySQL and add the **static external IP of the VM** plus your own machine (for the one-off seed). Confirm the engine enforces `CHECK` constraints (MariaDB 10.2+ or MySQL 8.0.16+).
@@ -98,14 +98,14 @@ Three pieces, each hosted where it fits:
 5. **HTTPS.** Run Caddy next to the API so the subdomain gets a certificate automatically (browsers block an HTTPS page that calls an HTTP API):
 
    ```bash
-   printf 'api.<your-domain> {
+   printf 'incubyte-api.shoyabsiddique.site {
   reverse_proxy localhost:8080
 }
 ' > ~/Caddyfile
    sudo docker run -d --name caddy --restart unless-stopped --network host -v ~/Caddyfile:/etc/caddy/Caddyfile -v caddy_data:/data caddy:2
    ```
 
-   Check `https://api.<your-domain>/actuator/health`: it reports `UP`.
+   Check `https://incubyte-api.shoyabsiddique.site/actuator/health`: it reports `UP`.
 6. **Seed once** from your machine, with your IP allowed on Hostinger:
 
    ```bash
@@ -118,7 +118,7 @@ Three pieces, each hosted where it fits:
 
    ```bash
    cd frontend
-   API_BASE_URL=https://api.<your-domain>/api/v1 node scripts/write-config.mjs
+   API_BASE_URL=https://incubyte-api.shoyabsiddique.site/api/v1 node scripts/write-config.mjs
    npx ng build
    ```
 
