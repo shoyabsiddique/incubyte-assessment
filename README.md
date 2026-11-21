@@ -15,7 +15,7 @@ A salary management tool for the HR Manager of a 10,000-employee, multi-country 
 | API health | `https://incubyte-api.shoyabsiddique.site/actuator/health` |
 | API documentation (Swagger) | `https://incubyte-api.shoyabsiddique.site/swagger-ui/index.html` |
 | Demo video | _to be added_ |
-| Demo login | `priya.nair@acme.example` (password set by `DEMO_HR_PASSWORD` when the seed runs) |
+| Demo login | `priya.nair@acme.example` / `DemoPassword@2026` (synthetic demo data only; the password is the `DEMO_HR_PASSWORD` the seed ran with) |
 
 The API runs on an always-on Google Cloud `e2-micro` VM, so there is no cold start. The first request after a restart can still take about a minute while the application starts on its small instance.
 
