@@ -10,7 +10,7 @@ A salary management tool for the HR Manager of a 10,000-employee, multi-country 
 
 | | |
 | --- | --- |
-| App | _to be added_ (static site on Hostinger) |
+| App | https://assessment.shoyabsiddique.site (static site on Hostinger) |
 | API | `https://incubyte-api.shoyabsiddique.site` (Google Cloud VM, HTTPS through Caddy) |
 | API health | `https://incubyte-api.shoyabsiddique.site/actuator/health` |
 | API documentation (Swagger) | `https://incubyte-api.shoyabsiddique.site/swagger-ui/index.html` |
@@ -81,7 +81,7 @@ Three pieces, each hosted where it fits:
 | --- | --- | --- |
 | Database | Hostinger MariaDB 11.4 | `srv1743.hstgr.io:3306` |
 | API | Google Cloud Compute Engine `e2-micro` (Always Free region such as `us-west1`) | `https://incubyte-api.shoyabsiddique.site` |
-| Frontend | Hostinger static hosting (`public_html`) | `https://<your-domain>` |
+| Frontend | Hostinger static hosting (`public_html`) | `https://assessment.shoyabsiddique.site` |
 
 1. **Database (Hostinger).** Create the database and user. Enable Remote MySQL and add the **static external IP of the VM** plus your own machine (for the one-off seed). Confirm the engine enforces `CHECK` constraints (MariaDB 10.2+ or MySQL 8.0.16+).
 2. **VM (Google Cloud).** Create an `e2-micro` in `us-west1`, `us-central1` or `us-east1` with a 30 GB standard disk, allow HTTP and HTTPS, and reserve a static external IP. Add 2 GB of swap (the instance has 1 GB of RAM) and install Docker.
@@ -94,7 +94,7 @@ Three pieces, each hosted where it fits:
    sudo docker run -d --name salary-api --restart unless-stopped --env-file ~/api.env -p 127.0.0.1:8080:8080 salary-api
    ```
 
-   `~/api.env` holds `SPRING_PROFILES_ACTIVE=prod`, `DB_URL=jdbc:mariadb://srv1743.hstgr.io:3306/<database>`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` (at least 32 bytes; `openssl rand -base64 48`), `CORS_ALLOWED_ORIGINS` (the exact frontend origin, for example `https://<your-domain>`) and `JAVA_TOOL_OPTIONS=-Xmx384m -XX:+UseSerialGC`. The `prod` profile refuses to start if any required value is missing or the key is too short. The connection pool is capped at 5. Flyway creates the schema on first start.
+   `~/api.env` holds `SPRING_PROFILES_ACTIVE=prod`, `DB_URL=jdbc:mariadb://srv1743.hstgr.io:3306/<database>`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` (at least 32 bytes; `openssl rand -base64 48`), `CORS_ALLOWED_ORIGINS` (the exact frontend origin, for example `https://assessment.shoyabsiddique.site`) and `JAVA_TOOL_OPTIONS=-Xmx384m -XX:+UseSerialGC`. The `prod` profile refuses to start if any required value is missing or the key is too short. The connection pool is capped at 5. Flyway creates the schema on first start.
 5. **HTTPS.** Run Caddy next to the API so the subdomain gets a certificate automatically (browsers block an HTTPS page that calls an HTTP API):
 
    ```bash
