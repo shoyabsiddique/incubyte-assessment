@@ -19,6 +19,8 @@ A salary management tool for the HR Manager of a 10,000-employee, multi-country 
 
 The API runs on an always-on Google Cloud `e2-micro` VM, so there is no cold start. The first request after a restart can still take about a minute while the application starts on its small instance.
 
+<video src="https://github.com/shoyabsiddique/incubyte-assessment/raw/refs/heads/main/docs/demo/acme-demo-walkthrough.mp4" controls muted width="100%"></video>
+
 ## Documents
 
 - [One-page requirements](docs/requirements.md)
