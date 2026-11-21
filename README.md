@@ -17,6 +17,10 @@ A salary management tool for the HR Manager of a 10,000-employee, multi-country 
 | Demo video | [Watch the walkthrough (about 1.5 minutes, no audio)](docs/demo/acme-demo-walkthrough.mp4) |
 | Demo login | `priya.nair@acme.example` / `DemoPassword@2026` (synthetic demo data only; the password is the `DEMO_HR_PASSWORD` the seed ran with) |
 
+
+https://github.com/user-attachments/assets/181368a9-bc8e-464c-83aa-a88c0701e725
+
+
 The API runs on an always-on Google Cloud `e2-micro` VM, so there is no cold start. The first request after a restart can still take about a minute while the application starts on its small instance.
 
 ## Documents
