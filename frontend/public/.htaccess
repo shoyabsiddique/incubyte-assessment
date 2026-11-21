@@ -1,0 +1,14 @@
+# Apache (Hostinger): send every path that is not a real file to the app, so deep links work.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  RewriteRule ^index\.html$ - [L]
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  RewriteRule . /index.html [L]
+</IfModule>
+
+# The API address must never be served from a stale cache.
+<FilesMatch "^config\.json$">
+  Header set Cache-Control "no-cache"
+</FilesMatch>

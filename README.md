@@ -10,12 +10,14 @@ A salary management tool for the HR Manager of a 10,000-employee, multi-country 
 
 | | |
 | --- | --- |
-| App | _to be added after the first deployment_ |
-| API health | _to be added_ `…/actuator/health` |
+| App | _to be added_ (static site on Hostinger) |
+| API | `https://api.<your-domain>` (Google Cloud VM, HTTPS through Caddy) |
+| API health | `https://api.<your-domain>/actuator/health` |
+| API documentation (Swagger) | `https://api.<your-domain>/swagger-ui/index.html` |
 | Demo video | _to be added_ |
 | Demo login | `priya.nair@acme.example` (password set by `DEMO_HR_PASSWORD` when the seed runs) |
 
-The API runs on a free Render instance, which sleeps when idle: the first request after a quiet period can take 30 to 60 seconds while it wakes up.
+The API runs on an always-on Google Cloud `e2-micro` VM, so there is no cold start. The first request after a restart can still take about a minute while the application starts on its small instance.
 
 ## Documents
 
@@ -67,22 +69,63 @@ cd e2e && npm ci && npm test            # needs the database, API and frontend a
 
 Locally Playwright uses your installed Chrome; in CI it installs Chromium.
 
+## API documentation (Swagger)
+
+Open `/swagger-ui/index.html` on the API (locally http://localhost:8080/swagger-ui/index.html). The page and the OpenAPI document at `/v3/api-docs` are public; the data endpoints are not. To try them: call `POST /api/v1/auth/login`, copy `accessToken` from the response, choose **Authorize** and paste it.
+
 ## Deploy
 
-The API and database are hosted separately from the static frontend. Nothing deploys unless every check on `main` is green.
+Three pieces, each hosted where it fits:
 
-1. **Database (Hostinger MariaDB/MySQL).** Create the database and user. Enable Remote MySQL and add the outbound IP addresses of your Render service plus your own machine (for the one-off seed). Use TLS in the JDBC URL if the host supports it. Confirm the engine enforces `CHECK` constraints (MariaDB 10.2+ or MySQL 8.0.16+).
-2. **API (Render).** Create a web service from [render.yaml](render.yaml) (Docker, free plan, auto-deploy off). Set `DB_URL`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` (at least 32 bytes; `openssl rand -base64 48`) and `CORS_ALLOWED_ORIGINS` (the exact frontend origin). The `prod` profile refuses to start if any is missing or the key is too short. The connection pool is capped at 5. Flyway creates the schema on first start and `/actuator/health` reports `UP`.
-3. **Seed once** from your machine, with your IP allowed on Hostinger:
+| Piece | Where | Address |
+| --- | --- | --- |
+| Database | Hostinger MariaDB 11.4 | `srv1743.hstgr.io:3306` |
+| API | Google Cloud Compute Engine `e2-micro` (Always Free region such as `us-west1`) | `https://api.<your-domain>` |
+| Frontend | Hostinger static hosting (`public_html`) | `https://<your-domain>` |
+
+1. **Database (Hostinger).** Create the database and user. Enable Remote MySQL and add the **static external IP of the VM** plus your own machine (for the one-off seed). Confirm the engine enforces `CHECK` constraints (MariaDB 10.2+ or MySQL 8.0.16+).
+2. **VM (Google Cloud).** Create an `e2-micro` in `us-west1`, `us-central1` or `us-east1` with a 30 GB standard disk, allow HTTP and HTTPS, and reserve a static external IP. Add 2 GB of swap (the instance has 1 GB of RAM) and install Docker.
+3. **Subdomain.** In the Hostinger DNS zone add an **A** record: name `api`, pointing at the VM's static IP. Remove any other `api` record first.
+4. **API container.** On the VM, build the image from [backend/Dockerfile](backend/Dockerfile) and run it with a settings file that is never committed:
+
+   ```bash
+   git clone https://github.com/shoyabsiddique/incubyte-assessment.git
+   cd incubyte-assessment/backend && sudo docker build -t salary-api .
+   sudo docker run -d --name salary-api --restart unless-stopped --env-file ~/api.env -p 127.0.0.1:8080:8080 salary-api
+   ```
+
+   `~/api.env` holds `SPRING_PROFILES_ACTIVE=prod`, `DB_URL=jdbc:mariadb://srv1743.hstgr.io:3306/<database>`, `DB_USER`, `DB_PASSWORD`, `JWT_SECRET` (at least 32 bytes; `openssl rand -base64 48`), `CORS_ALLOWED_ORIGINS` (the exact frontend origin, for example `https://<your-domain>`) and `JAVA_TOOL_OPTIONS=-Xmx384m -XX:+UseSerialGC`. The `prod` profile refuses to start if any required value is missing or the key is too short. The connection pool is capped at 5. Flyway creates the schema on first start.
+5. **HTTPS.** Run Caddy next to the API so the subdomain gets a certificate automatically (browsers block an HTTPS page that calls an HTTP API):
+
+   ```bash
+   printf 'api.<your-domain> {
+  reverse_proxy localhost:8080
+}
+' > ~/Caddyfile
+   sudo docker run -d --name caddy --restart unless-stopped --network host -v ~/Caddyfile:/etc/caddy/Caddyfile -v caddy_data:/data caddy:2
+   ```
+
+   Check `https://api.<your-domain>/actuator/health`: it reports `UP`.
+6. **Seed once** from your machine, with your IP allowed on Hostinger:
 
    ```bash
    cd backend
    SPRING_PROFILES_ACTIVE=prod,seed DB_URL=… DB_USER=… DB_PASSWORD=… JWT_SECRET=… CORS_ALLOWED_ORIGINS=… DEMO_HR_PASSWORD=… ./gradlew bootRun
    ```
 
-   Stop it once it has logged that it seeded the data.
-4. **Frontend (Netlify).** Create a site from this repository; [frontend/netlify.toml](frontend/netlify.toml) sets the build. Set `API_BASE_URL` to `https://<your-service>.onrender.com/api/v1`; the build writes it into `config.json`, so the address is not baked into the code. Deep links such as `/employees/…` work through the redirect rule.
-5. **Pipeline.** Add the repository secrets `RENDER_DEPLOY_HOOK_URL` (Render deploy hook) and `NETLIFY_BUILD_HOOK_URL` (Netlify build hook). On a push to `main`, [the pipeline](.github/workflows/ci.yml) runs the backend, frontend and end-to-end checks and builds the API image, and only then calls the two hooks. Pull requests and other branches run the checks and never deploy.
+   Stop it once it has logged that it seeded the data. `DEMO_HR_PASSWORD` is the demo login's password and must not start with `change-me`.
+7. **Frontend (Hostinger).** Point the build at the API and upload it:
+
+   ```bash
+   cd frontend
+   API_BASE_URL=https://api.<your-domain>/api/v1 node scripts/write-config.mjs
+   npx ng build
+   ```
+
+   Upload the contents of `frontend/dist/frontend/browser` into `public_html`, including the hidden `.htaccess`, which sends deep links such as `/employees/…` to the app. `config.json` can also be edited in place to change the API address without a rebuild. (`git checkout frontend/public/config.json` restores the local default afterwards.)
+8. **Updating the API.** On the VM: `git pull`, rebuild the image, then `sudo docker rm -f salary-api` and run it again with the same command.
+
+[frontend/netlify.toml](frontend/netlify.toml) and [render.yaml](render.yaml) are kept as an alternative (Netlify for the frontend, Render's free plan for the API). The `deploy` job in [the pipeline](.github/workflows/ci.yml) only calls Render and Netlify deploy hooks; with the Google Cloud setup above it logs a notice and does nothing. Checks (backend, frontend, end-to-end, image build) still run on every push.
 
 ## Project layout
 

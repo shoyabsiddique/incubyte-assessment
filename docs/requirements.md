@@ -44,6 +44,6 @@ Success means these five questions are answered on screen in seconds, with numbe
 
 ## Assumptions
 
-Demo data is synthetic and exchange rates are illustrative. Hosting uses a free tier, so the first request after idle can take up to a minute.
+Demo data is synthetic and exchange rates are illustrative. Hosting uses free tiers (a small always-on Google Cloud VM and a Hostinger database), so the first request after a restart can take about a minute.
 
 More detail: [full PRD](../_bmad-output/planning-artifacts/prds/prd-incubyte-assessment-2026-11-17/prd.md), [architecture](../_bmad-output/planning-artifacts/architecture/architecture-incubyte-assessment-2026-11-17/ARCHITECTURE-SPINE.md) and [design notes](design-notes.md).

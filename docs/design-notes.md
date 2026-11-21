@@ -25,7 +25,7 @@ Measured by the integration tests on 10,000 seeded employees, a real MariaDB 11.
 | `GET /api/v1/analytics/pay-extremes` | about 120 ms |
 | `GET /api/v1/analytics/anomalies` | about 80 ms |
 
-Numbers for the deployed instance (Render free tier, Hostinger database) are to be recorded here after the first deployment; if they exceed 500 ms, add the invalidated in-memory projection cache described in Story 4.4.
+Numbers for the deployed instance (Google Cloud e2-micro VM, Hostinger database) are to be recorded here after the first deployment; if they exceed 500 ms, add the invalidated in-memory projection cache described in Story 4.4.
 
 ## How AI tools were used
 

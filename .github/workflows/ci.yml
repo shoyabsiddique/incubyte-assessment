@@ -177,11 +177,11 @@ jobs:
         env:
           RENDER_DEPLOY_HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then echo "RENDER_DEPLOY_HOOK_URL is not set"; exit 1; fi
+          if [ -z "$RENDER_DEPLOY_HOOK_URL" ]; then echo "RENDER_DEPLOY_HOOK_URL is not set: skipping the Render deploy (the API is deployed on a Google Cloud VM)"; exit 0; fi
           curl -fsS -X POST "$RENDER_DEPLOY_HOOK_URL"
       - name: Deploy the frontend on Netlify
         env:
           NETLIFY_BUILD_HOOK_URL: ${{ secrets.NETLIFY_BUILD_HOOK_URL }}
         run: |
-          if [ -z "$NETLIFY_BUILD_HOOK_URL" ]; then echo "NETLIFY_BUILD_HOOK_URL is not set"; exit 1; fi
+          if [ -z "$NETLIFY_BUILD_HOOK_URL" ]; then echo "NETLIFY_BUILD_HOOK_URL is not set: skipping the Netlify deploy (the frontend is deployed on Hostinger)"; exit 0; fi
           curl -fsS -X POST "$NETLIFY_BUILD_HOOK_URL"

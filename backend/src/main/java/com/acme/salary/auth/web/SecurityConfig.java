@@ -13,7 +13,7 @@ import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.AccessDeniedHandler;
 
-/** Every endpoint needs a valid token except sign-in and the health and info probes. */
+/** Every endpoint needs a valid token except sign-in, the health and info probes and the API documentation. */
 @Configuration(proxyBeanMethods = false)
 class SecurityConfig {
 
@@ -32,6 +32,7 @@ class SecurityConfig {
                 .authorizeHttpRequests(requests -> requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors.authenticationEntryPoint(unauthenticated).accessDeniedHandler(forbidden))
